@@ -24,5 +24,5 @@ map = Basemap(projection='merc',llcrnrlat=-57,urcrnrlat=71, llcrnrlon=-180,urcrn
 map.drawcoastlines(linewidth = 1.25)
 lats = data["lat"]
 longs = data["long"]
-x,y = map(longs,lats)
+x,y = map(longs.values,lats.values)
 map.plot(x,y, ls='', marker=markers[i], markerfacecolor=colors[i], markeredgewidth=0.25, markersize=markersizes)
