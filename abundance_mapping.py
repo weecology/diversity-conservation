@@ -25,4 +25,5 @@ map.drawcoastlines(linewidth = 1.25)
 lats = data["lat"]
 longs = data["long"]
 x,y = map(longs.values,lats.values)
-map.plot(x,y, ls='', marker=markers[i], markerfacecolor=colors[i], markeredgewidth=0.25, markersize=markersizes)
+map.plot(x, y, ls='', marker='o')
+plt.show()
