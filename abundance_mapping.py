@@ -41,3 +41,5 @@ for species, species_data in data_species:
     occurence_sites = len(species_data['site'])
     proportion = occurence_sites/total_sites
     rarity_prop.append([species, proportion])
+sp_rarity = pd.DataFrame(rarity_prop, columns=['species', 'proportion'])
+data_w_proportion = pd.merge(sp_rarity, data, on='species')
