@@ -10,13 +10,6 @@ import macroecotools
 
 data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
 
-#determine number of sites
-data_site = data.groupby('site')
-sites = []
-for site, site_data in data_site:
-    sites.append(site)
-print len(sites)
-
 #plot sites
 map = Basemap(projection='merc',llcrnrlat=15,urcrnrlat=71, llcrnrlon=-170,urcrnrlon=-50,lat_ts=20,resolution='l')
 map.drawcoastlines(linewidth = 1.25)
