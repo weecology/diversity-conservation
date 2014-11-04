@@ -30,14 +30,10 @@ plt.show()
 richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], ['species'])
 
 #plot rare species
-data_rare = data.groupby('species', 'site').count()
+data_rare = data.groupby(['species', 'site']).count()
 data_species = data.groupby('species')
 
-#data_site = data.groupby('site').count()
-#total_sites = len(data_site['site'])
-
-#total_sites = len(set(s['site'] for s in data))
-total_sites= 5000
+total_sites = len(np.unique(data['site']))
 
 rarity_prop = []
 
