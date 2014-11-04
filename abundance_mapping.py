@@ -27,7 +27,7 @@ map.plot(x, y, ls='', marker='o')
 plt.show()
 
 #plot according to richness at site
-richness_by_site = macroecotools.richness_in_group(data, ['site'], ['species'])
+richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], ['species'])
 
 #plot rare species
 data_rare = data.groupby('species', 'site').count()
@@ -45,4 +45,3 @@ for species, species_data in data_species:
     occurence_sites = len(species_data['site'])
     proportion = occurence_sites/total_sites
     rarity_prop.append([species, proportion])
-    
