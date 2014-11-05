@@ -22,6 +22,9 @@ plt.show()
 #plot according to richness at site
 richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], ['species'])
 
+blues = np.linspace(0, 1, num=10)
+cat_object = pd.qcut(richness_by_site['richness'], 10)
+
 #plot rare species
 data_species = data.groupby('species')
 
@@ -35,3 +38,4 @@ for species, species_data in data_species:
     rarity_prop.append([species, proportion])
 sp_rarity = pd.DataFrame(rarity_prop, columns=['species', 'proportion'])
 data_w_proportion = pd.merge(sp_rarity, data, on='species')
+
