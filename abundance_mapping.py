@@ -22,8 +22,22 @@ plt.show()
 #plot according to richness at site
 richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], ['species'])
 
-blues = np.linspace(0, 1, num=10)
-cat_object = pd.qcut(richness_by_site['richness'], 10)
+map = Basemap(projection='merc',llcrnrlat=15,urcrnrlat=71, llcrnrlon=-170,urcrnrlon=-50,lat_ts=20,resolution='l')
+map.drawcoastlines(linewidth = 1.25)
+lats = richness_by_site["lat"]
+longs = richness_by_site["long"]
+x,y = map(longs.values,lats.values)
+blues = np.linspace(0, 225, num=10)
+richness_by_site['quantile'] = pd.qcut(richness_by_site['richness'], 10)
+grouped = richness_by_site.groupby('quantile')
+
+i=-1
+for groupname, groupdata, in grouped:
+    i = i + 1
+    colors = (0, 0, blues[i])
+    print colors
+    map.plot(x, y, ls='', marker='o', color=colors)
+plt.show()
 
 #plot rare species
 data_species = data.groupby('species')
