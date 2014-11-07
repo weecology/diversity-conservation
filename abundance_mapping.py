@@ -36,6 +36,9 @@ i=-1
 for groupname, groupdata, in grouped:
     i = i + 1
     colors = blues[i]
+    lats = groupdata["lat"]
+    longs = groupdata["long"]
+    x,y = map(longs.values,lats.values)
     print colors
     map.plot(x, y, ls='', marker='o', color=colors)
 plt.show()
