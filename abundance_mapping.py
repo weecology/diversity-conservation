@@ -7,6 +7,7 @@ import pandas as pd
 import numpy
 from mpl_toolkits.basemap import Basemap
 import macroecotools
+import seaborn as sns
 
 data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
 
@@ -27,14 +28,14 @@ map.drawcoastlines(linewidth = 1.25)
 lats = richness_by_site["lat"]
 longs = richness_by_site["long"]
 x,y = map(longs.values,lats.values)
-blues = np.linspace(0, 225, num=10)
+blues = sns.color_palette("Blues", n_colors=10)
 richness_by_site['quantile'] = pd.qcut(richness_by_site['richness'], 10)
 grouped = richness_by_site.groupby('quantile')
 
 i=-1
 for groupname, groupdata, in grouped:
     i = i + 1
-    colors = (0, 0, blues[i])
+    colors = blues[i]
     print colors
     map.plot(x, y, ls='', marker='o', color=colors)
 plt.show()
