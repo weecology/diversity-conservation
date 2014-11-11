@@ -31,6 +31,7 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None,
         lats = dataframe[lat_col]
         longs = dataframe[long_col]
         x,y = map(longs.values,lats.values)
+        map.plot(x, y, ls='', marker='bo')
 
     if char_column:
         blues = sns.color_palette("Blues", n_colors=bins)
@@ -62,3 +63,10 @@ for species, species_data in data_species:
     rarity_prop.append([species, proportion])
 sp_rarity = pd.DataFrame(rarity_prop, columns=['species', 'proportion'])
 data_w_proportion = pd.merge(sp_rarity, data, on='species')
+
+prop_uniq = np.unique(data_w_proportion['proportion'])
+med = np.median(prop_uniq)
+
+data_rare = data_w_proportion[data_w_proportion['proportion'] < med]
+
+plot_sites_by_characteristic(data_rare, lat_col='lat', long_col='long')
