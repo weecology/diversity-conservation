@@ -12,17 +12,6 @@ import seaborn as sns
 data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
 
 #plot sites
-map = Basemap(projection='merc',llcrnrlat=15,urcrnrlat=71, llcrnrlon=-170,urcrnrlon=-50,lat_ts=20,resolution='l')
-map.drawcoastlines(linewidth = 1.25)
-lats = data["lat"]
-longs = data["long"]
-x,y = map(longs.values,lats.values)
-map.plot(x, y, ls='', marker='o')
-plt.show()
-
-#plot according to richness at site
-richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], ['species'])
-
 def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None, bins=None):
     map = Basemap(projection='merc',llcrnrlat=15,urcrnrlat=71, llcrnrlon=-170,urcrnrlon=-50,lat_ts=20,resolution='l')
     map.drawcoastlines(linewidth = 1.25)
@@ -31,7 +20,7 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None,
         lats = dataframe[lat_col]
         longs = dataframe[long_col]
         x,y = map(longs.values,lats.values)
-        map.plot(x, y, ls='', marker='bo')
+        map.plot(x, y, ls='', marker='o')
 
     if char_column:
         blues = sns.color_palette("Blues", n_colors=bins)
@@ -47,6 +36,12 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None,
             x,y = map(longs.values,lats.values)
             map.plot(x, y, ls='', marker='o', color=colors)
     plt.show()
+
+
+plot_sites_by_characteristic(data, 'lat', 'long')
+
+#plot according to richness at site
+richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], ['species'])
 
 plot_sites_by_characteristic(richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=10)
 
