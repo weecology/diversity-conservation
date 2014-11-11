@@ -34,7 +34,7 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None,
 
     if char_column:
         blues = sns.color_palette("Blues", n_colors=bins)
-        dataframe['quantile'] = pd.qcut(dataframe['char_column'], bins)
+        dataframe['quantile'] = pd.qcut(dataframe[char_column], bins)
         grouped = dataframe.groupby('quantile')
         
         i=-1
@@ -44,9 +44,10 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None,
             lats = groupdata["lat"]
             longs = groupdata["long"]
             x,y = map(longs.values,lats.values)
-            print colors
             map.plot(x, y, ls='', marker='o', color=colors)
     plt.show()
+
+plot_sites_by_characteristic(richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=10)
 
 #plot rare species
 data_species = data.groupby('species')
@@ -61,7 +62,3 @@ for species, species_data in data_species:
     rarity_prop.append([species, proportion])
 sp_rarity = pd.DataFrame(rarity_prop, columns=['species', 'proportion'])
 data_w_proportion = pd.merge(sp_rarity, data, on='species')
-
-def sum_or_not(list_of_numbers, tosum=True):
-    if tosum:
-        return sum(list_of_numbers)
