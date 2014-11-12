@@ -13,6 +13,7 @@ data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
 
 #plot sites
 def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None, bins=None):
+    plt.figure()
     map = Basemap(projection='merc',llcrnrlat=15,urcrnrlat=71, llcrnrlon=-170,urcrnrlon=-50,lat_ts=20,resolution='l')
     map.drawcoastlines(linewidth = 1.25)
     
@@ -35,7 +36,6 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None,
             longs = groupdata["long"]
             x,y = map(longs.values,lats.values)
             map.plot(x, y, ls='', marker='o', color=colors)
-    plt.show()
 
 
 plot_sites_by_characteristic(data, 'lat', 'long')
@@ -59,9 +59,19 @@ for species, species_data in data_species:
 sp_rarity = pd.DataFrame(rarity_prop, columns=['species', 'proportion'])
 data_w_proportion = pd.merge(sp_rarity, data, on='species')
 
-prop_uniq = np.unique(data_w_proportion['proportion'])
-med = np.median(prop_uniq)
+data_w_proportion_species = data_w_proportion.groupby('species')
 
+uniq_prop = []
+for species, species_data in data_w_proportion_species:
+    mean=np.mean(species_data['proportion'])
+    uniq_prop.append(mean)
+med = np.median(uniq_prop)
+    
 data_rare = data_w_proportion[data_w_proportion['proportion'] < med]
 
 plot_sites_by_characteristic(data_rare, lat_col='lat', long_col='long')
+
+plt.figure()
+plt.hist(uniq_prop, bins=20)
+
+plt.show()
