@@ -71,7 +71,4 @@ data_rare = data_w_proportion[data_w_proportion['proportion'] < med]
 
 plot_sites_by_characteristic(data_rare, lat_col='lat', long_col='long')
 
-plt.figure()
-plt.hist(uniq_prop, bins=20)
-
 plt.show()
