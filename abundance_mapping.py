@@ -8,6 +8,7 @@ import numpy
 from mpl_toolkits.basemap import Basemap
 import macroecotools
 import seaborn as sns
+import random
 
 data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
 
@@ -72,3 +73,33 @@ data_rare = data_w_proportion[data_w_proportion['proportion'] < med]
 plot_sites_by_characteristic(data_rare, lat_col='lat', long_col='long')
 
 plt.show()
+
+#grid sampling
+
+def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_in_cell):
+    min_lat = min(dataframe[lat_col])
+    max_lat = max(dataframe[lat_col])
+    min_long = min(dataframe[long_col])
+    max_long = max(dataframe[long_col])
+    band_degrees = (band_width/40000)*360
+    lat_start = min_lat + 0.001
+    lat_end = lat_start
+    long_start = min_long + 0.001
+    long_end = long_start
+    data_selection = pd.DataFrame()
+    while lat_end < max_lat:
+        lat_end = lat_end + band_degrees
+        data_lat = dataframe[(dataframe[lat_col] > lat_start) & (dataframe[lat_col] < lat_end)]
+        lat_start = lat_end
+        while long_end < max_long:
+            long_end = long_end + band_degrees
+            data_long = data_lat[(data_lat[long_col] > long_start) & (data_lat[long_col] < long_end)]
+            long_start = long_end
+            if len(data_long['site']) != 0:
+                selection = data_long[random.sample(data_long.index, sites_in_cell)]
+                data_selection = data_selection.append(selection)
+                print 'yes'
+    return data_selection
+
+selected_sites = get_sites_by_grid(data_w_proportion, 'site', 'lat', 'long', 10, 3)
+    
