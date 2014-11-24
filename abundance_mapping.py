@@ -77,29 +77,30 @@ plt.show()
 #grid sampling
 
 def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_in_cell):
+    dataframe = dataframe[['site', 'lat', 'long']].drop_duplicates()
     min_lat = min(dataframe[lat_col])
     max_lat = max(dataframe[lat_col])
     min_long = min(dataframe[long_col])
     max_long = max(dataframe[long_col])
     band_degrees = (band_width/40000)*360
-    lat_start = min_lat + 0.001
+    lat_start = min_lat - 0.001
     lat_end = lat_start
-    long_start = min_long + 0.001
-    long_end = long_start
     data_selection = pd.DataFrame()
     while lat_end < max_lat:
+        long_start = min_long - 0.001
+        long_end = long_start
         lat_end = lat_end + band_degrees
-        data_lat = dataframe[(dataframe[lat_col] > lat_start) & (dataframe[lat_col] < lat_end)]
-        lat_start = lat_end
         while long_end < max_long:
+            print lat_end, long_end
             long_end = long_end + band_degrees
-            data_long = data_lat[(data_lat[long_col] > long_start) & (data_lat[long_col] < long_end)]
+            data_sub = dataframe[(dataframe[lat_col] > lat_start) & (dataframe[lat_col] < lat_end) & (dataframe[long_col] > long_start) & (dataframe[long_col] < long_end)]
             long_start = long_end
-            if len(data_long['site']) != 0:
-                selection = data_long[random.sample(data_long.index, sites_in_cell)]
-                data_selection = data_selection.append(selection)
-                print 'yes'
+            print 'sites', len(data_sub['long'])
+            if len(data_sub['site']) >= sites_in_cell:
+                selection = data_sub.ix[random.sample(data_sub.index, sites_in_cell)]
+                data_selection.append(selection)
+        lat_start = lat_end
     return data_selection
-
-selected_sites = get_sites_by_grid(data_w_proportion, 'site', 'lat', 'long', 10, 3)
+        
+selected_sites = get_sites_by_grid(data_w_proportion, 'site', 'lat', 'long', 100, 3)
     
