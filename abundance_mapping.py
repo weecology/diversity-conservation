@@ -91,16 +91,14 @@ def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_
         long_end = long_start
         lat_end = lat_end + band_degrees
         while long_end < max_long:
-            print lat_end, long_end
             long_end = long_end + band_degrees
             data_sub = dataframe[(dataframe[lat_col] > lat_start) & (dataframe[lat_col] < lat_end) & (dataframe[long_col] > long_start) & (dataframe[long_col] < long_end)]
             long_start = long_end
-            print 'sites', len(data_sub['long'])
             if len(data_sub['site']) >= sites_in_cell:
                 selection = data_sub.ix[random.sample(data_sub.index, sites_in_cell)]
-                data_selection.append(selection)
+                data_selection = data_selection.append(selection)
         lat_start = lat_end
     return data_selection
         
-selected_sites = get_sites_by_grid(data_w_proportion, 'site', 'lat', 'long', 100, 3)
+selected_sites = get_sites_by_grid(data_w_proportion, 'site', 'lat', 'long', 10, 3)
     
