@@ -1,4 +1,5 @@
 from __future__ import division
+from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 import colorsys
@@ -9,6 +10,8 @@ from mpl_toolkits.basemap import Basemap
 import macroecotools
 import seaborn as sns
 import random
+import glob
+import os
 
 data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
 
@@ -99,6 +102,18 @@ def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_
                 data_selection = data_selection.append(selection)
         lat_start = lat_end
     return data_selection
-        
-selected_sites = get_sites_by_grid(data_w_proportion, 'site', 'lat', 'long', 10, 3)
-    
+
+def check_for_file(path, file_name):
+    os.chdir(path)
+    for file in glob.glob(file_name):
+        filename = file
+        print (filename)
+    if filename in locals():
+        print(1)
+
+if check_for_file('/Users/karinorman/Documents/reserve_selection', 'selected_sites.csv') == 1:
+    selected_sites = pd.read_csv('selected_sites.csv', delimiter=',')
+    print ('yes')
+else:
+    selected_sites = get_sites_by_grid(data_w_proportion, 'site', 'lat', 'long', 100, 3)
+    selected_sites.to_csv('selected_sites.csv')
