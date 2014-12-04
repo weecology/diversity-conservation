@@ -103,15 +103,7 @@ def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_
         lat_start = lat_end
     return data_selection
 
-def check_for_file(path, file_name):
-    os.chdir(path)
-    for file in glob.glob(file_name):
-        filename = file
-        print (filename)
-    if filename in locals():
-        print(1)
-
-if os.path.isfile('/Users/karinorman/Documents/reserve_selection/selected_sites.csv') == True:
+if os.path.isfile('selected_sites.csv') == True:
     selected_sites = pd.read_csv('selected_sites.csv', delimiter=',')
     print ('yes')
 else:
