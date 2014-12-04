@@ -111,7 +111,7 @@ def check_for_file(path, file_name):
     if filename in locals():
         print(1)
 
-if check_for_file('/Users/karinorman/Documents/reserve_selection', 'selected_sites.csv') == 1:
+if os.path.isfile('/Users/karinorman/Documents/reserve_selection/selected_sites.csv') == True:
     selected_sites = pd.read_csv('selected_sites.csv', delimiter=',')
     print ('yes')
 else:
