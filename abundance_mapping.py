@@ -75,7 +75,6 @@ data_rare = data_w_proportion[data_w_proportion['proportion'] < med]
 
 plot_sites_by_characteristic(data_rare, lat_col='lat', long_col='long')
 
-plt.show()
 
 #grid sampling
 
@@ -109,3 +108,8 @@ if os.path.isfile('selected_sites.csv') == True:
 else:
     selected_sites = get_sites_by_grid(data_w_proportion, 'site', 'lat', 'long', 100, 3)
     selected_sites.to_csv('selected_sites.csv')
+    
+plot_sites_by_characteristic(selected_sites, lat_col='lat', long_col='long')
+
+
+plt.show()
