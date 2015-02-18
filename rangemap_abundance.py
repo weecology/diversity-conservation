@@ -2,21 +2,33 @@ import numpy as np
 from osgeo import ogr
 import os
 
-os.chdir(/Users/karinorman/Documents/reserve_selection/data/BOTW)
+os.chdir('/home/ethan/Dropbox/Databases/BirdLifeRangeMaps/BOTW/')
 driver = ogr.GetDriverByName('OpenFileGDB')
 gdb = driver.Open("BOTW.gdb", 0)
 
-# list to store layers'names
-featsClassList = []
+all_sp_layer = gdb.GetLayer("All_Spp")
 
-# parsing layers by index
-for featsClass_idx in range(gdb.GetLayerCount()):
-    featsClass = gdb.GetLayerByIndex(featsClass_idx)
-    featsClassList.append(featsClass.GetName())
+# NOTES:
+# There is one layer, which includes polygons for all species
+# We can get a layer using
+all_sp_layer = gdb.GetLayer("All_Spp")
+# There are ~17000 features, which are one or more polygons for each species
+# We can get a feature by using
+first_feature = all_sp_layer.GetFeature(1) #indexing appears to start at 1
+# Each feature (which is a polygon) has 16 "items" or "attributes"
+# We can get a list of features by
+first_feature.items()
+# We can get a particular value by
+first_feature.GetField('SCINAME')
 
-# sorting
-featsClassList.sort()
 
-# printing
-for featsClass in featsClassList:
-    print featsClass
+
+# Filter features to only include those where Seasonal == 1 or 2 (i.e., where the polygon is either resident or breeding season)
+all_sp_layer.SetAttributeFilter("Seasonal = 1 or Seasonal = 2")
+
+# Get species names for every polygon
+species = []
+for i in range(all_sp_layer.GetFeatureCount()):
+    feature = all_sp_layer.GetFeature(i + 1)
+    sciname = feature.GetField('SCINAME')
+    species.append(sciname)
