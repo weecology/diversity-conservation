@@ -25,7 +25,7 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None,
         lats = dataframe[lat_col]
         longs = dataframe[long_col]
         x,y = map(longs.values,lats.values)
-        map.plot(x, y, ls='', marker='o')
+        map.plot(x, y, ls='', marker='o', markersize=4)
 
     if char_column:
         blues = sns.color_palette("Blues", n_colors=bins)
@@ -39,7 +39,7 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None,
             lats = groupdata["lat"]
             longs = groupdata["long"]
             x,y = map(longs.values,lats.values)
-            map.plot(x, y, ls='', marker='o', color=colors)
+            map.plot(x, y, ls='', marker='o', color=colors, markersize=4)
 
 
 plot_sites_by_characteristic(data, 'lat', 'long')
@@ -50,28 +50,30 @@ richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long']
 plot_sites_by_characteristic(richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=10)
 
 #plot rare species
-data_species = data.groupby('species')
+def get_rarity_proportion(dataframe, species_column, site_column):
+    data_species = dataframe.groupby(species_column)
+    total_sites = len(np.unique(dataframe[site_column]))
+    rarity_prop = []
+    for species, species_data in data_species:
+        occurence_sites = len(species_data[site_column])
+        proportion = occurence_sites/total_sites
+        rarity_prop.append([species, proportion])
+    sp_rarity = pd.DataFrame(rarity_prop, columns=[species_column, 'proportion'])
+    data_w_proportion = pd.merge(sp_rarity, data, on=species_column)
+    return data_w_proportion
+data_w_proportion = get_rarity_proportion(data, 'species', 'site')
 
-total_sites = len(np.unique(data['site']))
+def get_median_rarity_proportion(dataframe, species_column, proportion_column):
+    dataframe_species = dataframe.groupby(species_column)
+    uniq_prop = []
+    for species, species_data in dataframe_species:
+        mean=np.mean(species_data[proportion_column])
+        uniq_prop.append(mean)
+    med = np.median(uniq_prop)
+    return med
+median_rarity = get_median_rarity_proportion(data_w_proportion_function, 'species', 'proportion')
 
-rarity_prop = []
-
-for species, species_data in data_species:
-    occurence_sites = len(species_data['site'])
-    proportion = occurence_sites/total_sites
-    rarity_prop.append([species, proportion])
-sp_rarity = pd.DataFrame(rarity_prop, columns=['species', 'proportion'])
-data_w_proportion = pd.merge(sp_rarity, data, on='species')
-
-data_w_proportion_species = data_w_proportion.groupby('species')
-
-uniq_prop = []
-for species, species_data in data_w_proportion_species:
-    mean=np.mean(species_data['proportion'])
-    uniq_prop.append(mean)
-med = np.median(uniq_prop)
-    
-data_rare = data_w_proportion[data_w_proportion['proportion'] < med]
+data_rare = data_w_proportion[data_w_proportion['proportion'] < median_rarity]
 
 plot_sites_by_characteristic(data_rare, lat_col='lat', long_col='long')
 
@@ -106,10 +108,14 @@ if os.path.isfile('selected_sites.csv') == True:
     selected_sites = pd.read_csv('selected_sites.csv', delimiter=',')
     print ('yes')
 else:
-    selected_sites = get_sites_by_grid(data_w_proportion, 'site', 'lat', 'long', 100, 3)
+    selected_sites = get_sites_by_grid(data, 'site', 'lat', 'long', 100, 3)
+    selected_w_proportion = get_rarity_proportion(selected_sites, 'species', 'site')
+    selected_median = get_median_rarity_proportion(selected_w_proportion, 'species', 'proportion')
+    selected_rare = selected_w_proportion[selected_w_proportion['proportion'] < selected_median]
     selected_sites.to_csv('selected_sites.csv')
     
 plot_sites_by_characteristic(selected_sites, lat_col='lat', long_col='long')
+plot_sites_by_characteristic(selected_rare, 'lat', 'long')
 
 
 plt.show()
