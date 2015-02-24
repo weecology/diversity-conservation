@@ -61,7 +61,7 @@ def get_rarity_proportion(dataframe, species_column, site_column):
         proportion = occurence_sites/total_sites
         rarity_prop.append([species, proportion])
     sp_rarity = pd.DataFrame(rarity_prop, columns=[species_column, 'proportion'])
-    data_w_proportion = pd.merge(sp_rarity, data, on=species_column)
+    data_w_proportion = pd.merge(sp_rarity, dataframe, on=species_column)
     return data_w_proportion
 data_w_proportion = get_rarity_proportion(data, 'species', 'site')
 
