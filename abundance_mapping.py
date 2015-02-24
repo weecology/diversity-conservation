@@ -43,11 +43,13 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None,
 
 
 plot_sites_by_characteristic(data, 'lat', 'long')
+plt.savefig('site_map.jpg')
 
 #plot according to richness at site
 richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], ['species'])
 
 plot_sites_by_characteristic(richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=10)
+plt.savefig('richness_map.jpg')
 
 #plot rare species
 def get_rarity_proportion(dataframe, species_column, site_column):
@@ -76,6 +78,7 @@ median_rarity = get_median_rarity_proportion(data_w_proportion, 'species', 'prop
 data_rare = data_w_proportion[data_w_proportion['proportion'] < median_rarity]
 
 plot_sites_by_characteristic(data_rare, lat_col='lat', long_col='long')
+plt.savefig('rare_site_map.jpg')
 
 
 #grid sampling
@@ -117,7 +120,6 @@ selected_median = get_median_rarity_proportion(selected_w_proportion, 'species',
 selected_rare = selected_w_proportion[selected_w_proportion['proportion'] < selected_median]
 
 plot_sites_by_characteristic(selected_sites, lat_col='lat', long_col='long')
-plot_sites_by_characteristic(selected_rare, 'lat', 'long')
-
-
-plt.show()
+plt.savefig('grid_selected_site_map.jpg')
+plot_sites_by_characteristic(selected_rare, 'lat_x', 'long_x')
+plt.savefig('grid_selected_rare_site_map.jpg')
