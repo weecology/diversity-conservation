@@ -109,12 +109,12 @@ if os.path.isfile('selected_sites.csv') == True:
     print ('yes')
 else:
     selected_sites = get_sites_by_grid(data, 'site', 'lat', 'long', 100, 3)
-    selected_w_proportion = get_rarity_proportion(selected_sites, 'species', 'site')
-    selected_median = get_median_rarity_proportion(selected_w_proportion, 'species', 'proportion')
-    selected_rare = selected_w_proportion[selected_w_proportion['proportion'] < selected_median]
     selected_sites.to_csv('selected_sites.csv')
 
 data_from_selected_sites = pd.merge(selected_sites, data_w_proportion, how='left', on='site')
+selected_w_proportion = get_rarity_proportion(data_from_selected_sites, 'species', 'site')
+selected_median = get_median_rarity_proportion(selected_w_proportion, 'species', 'proportion')
+selected_rare = selected_w_proportion[selected_w_proportion['proportion'] < selected_median]
 
 plot_sites_by_characteristic(selected_sites, lat_col='lat', long_col='long')
 plot_sites_by_characteristic(selected_rare, 'lat', 'long')
