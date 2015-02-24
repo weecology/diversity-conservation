@@ -71,7 +71,7 @@ def get_median_rarity_proportion(dataframe, species_column, proportion_column):
         uniq_prop.append(mean)
     med = np.median(uniq_prop)
     return med
-median_rarity = get_median_rarity_proportion(data_w_proportion_function, 'species', 'proportion')
+median_rarity = get_median_rarity_proportion(data_w_proportion, 'species', 'proportion')
 
 data_rare = data_w_proportion[data_w_proportion['proportion'] < median_rarity]
 
