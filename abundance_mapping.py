@@ -113,7 +113,9 @@ else:
     selected_median = get_median_rarity_proportion(selected_w_proportion, 'species', 'proportion')
     selected_rare = selected_w_proportion[selected_w_proportion['proportion'] < selected_median]
     selected_sites.to_csv('selected_sites.csv')
-    
+
+data_from_selected_sites = pd.merge(selected_sites, data_w_proportion, how='left', on='site')
+
 plot_sites_by_characteristic(selected_sites, lat_col='lat', long_col='long')
 plot_sites_by_characteristic(selected_rare, 'lat', 'long')
 
