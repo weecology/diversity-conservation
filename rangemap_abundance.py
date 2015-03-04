@@ -2,11 +2,9 @@ import numpy as np
 from osgeo import ogr
 import os
 
-os.chdir('/home/ethan/Dropbox/Databases/BirdLifeRangeMaps/BOTW/')
+os.chdir('/Users/karinorman/Documents/reserve_selection/data/BOTW')
 driver = ogr.GetDriverByName('OpenFileGDB')
-gdb = driver.Open("BOTW.gdb", 0)
-
-all_sp_layer = gdb.GetLayer("All_Spp")
+gdb = driver.Open("data/BOTW/BOTW.gdb", 0)
 
 # NOTES:
 # There is one layer, which includes polygons for all species
@@ -32,3 +30,9 @@ for i in range(all_sp_layer.GetFeatureCount()):
     feature = all_sp_layer.GetFeature(i + 1)
     sciname = feature.GetField('SCINAME')
     species.append(sciname)
+
+driver1 = ogr.GetDriverByName('ASCII')
+sites = driver1.Open('bbs_site_coordinates.csv')
+# unique list of site coordinates
+# loop over polygons for each point 
+# list of species names for each site
