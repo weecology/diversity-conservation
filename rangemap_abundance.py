@@ -4,8 +4,14 @@ import os
 
 os.chdir('/Users/karinorman/Documents/reserve_selection/data/BOTW')
 driver = ogr.GetDriverByName('OpenFileGDB')
-gdb = driver.Open("data/BOTW/BOTW.gdb", 0)
+gdb = driver.Open("BOTW.gdb", 0)
 
+try:
+    gdb = driver.Open("BOTW.gdb", 0)
+except Exception, e:
+    print e
+    sys.exit()
+    
 # NOTES:
 # There is one layer, which includes polygons for all species
 # We can get a layer using
