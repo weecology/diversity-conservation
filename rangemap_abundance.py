@@ -1,16 +1,11 @@
 import numpy as np
 from osgeo import ogr
 import os
+import pandas as pd
 
 os.chdir('/Users/karinorman/Documents/reserve_selection/data/BOTW')
 driver = ogr.GetDriverByName('OpenFileGDB')
 gdb = driver.Open("BOTW.gdb", 0)
-
-try:
-    gdb = driver.Open("BOTW.gdb", 0)
-except Exception, e:
-    print e
-    sys.exit()
     
 # NOTES:
 # There is one layer, which includes polygons for all species
@@ -37,8 +32,11 @@ for i in range(all_sp_layer.GetFeatureCount()):
     sciname = feature.GetField('SCINAME')
     species.append(sciname)
 
-driver1 = ogr.GetDriverByName('ASCII')
+#read in sites
+driver1 = ogr.GetDriverByName('CSV')
 sites = driver1.Open('bbs_site_coordinates.csv')
+
+
 # unique list of site coordinates
 # loop over polygons for each point 
 # list of species names for each site
