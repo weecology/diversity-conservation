@@ -40,7 +40,8 @@ sites = driver1.Open('bbs_site_coordinates.csv')
 # unique list of site coordinates
 # loop over polygons for each point 
 # list of species names for each site
-from osgeo import ogr
+#from osgeo import ogr
+import ogr
 ogr.UseExceptions()
 
 inDataSource = ogr.Open("example_wrapper.vrt")
@@ -49,7 +50,7 @@ for feat in lyr:
     geom = feat.GetGeometryRef()
     print geom.ExportToWkt() 
 
-inDataSource = ogr.Open("bbs_sites_coordinate_wrapper.vrt")
+inDataSource = ogr.Open("bbs_sites_coordinates_wrapper.vrt")
 lyr = inDataSource.GetLayer('bbs_sites')
 for feat in lyr:
     geom = feat.GetGeometryRef()
