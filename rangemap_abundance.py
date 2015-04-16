@@ -24,11 +24,11 @@ first_feature.GetField('SCINAME')
 all_sp_layer.SetAttributeFilter("Seasonal = 1 or Seasonal = 2")
 
 # Get species names for every polygon
-species = []
-for i in range(all_sp_layer.GetFeatureCount()):
-    feature = all_sp_layer.GetFeature(i + 1)
-    sciname = feature.GetField('SCINAME')
-    species.append(sciname)
+#species = []
+#for i in range(all_sp_layer.GetFeatureCount()):
+    #feature = all_sp_layer.GetFeature(i + 1)
+    #sciname = feature.GetField('SCINAME')
+    #species.append(sciname)
 
 #import sites
 inDataSource = ogr.Open("bbs_sites_coordinates_wrapper.vrt")
@@ -39,11 +39,13 @@ for feat in site_lyr:
  
 species_count = pd.DataFrame()
 for i in range(site_lyr.GetFeatureCount()):
+    print "i %d" %i
     num_species = []
     indv_site = site_lyr.GetFeature(i+1)
     indv_site_geom = indv_site.GetGeometryRef()
-    for i in range(all_sp_layer.GetFeatureCount()):
-        indv_species = all_sp_layer.GetFeature(i+1)
+    for j in range(all_sp_layer.GetFeatureCount()):
+        print "j %d" %j
+        indv_species = all_sp_layer.GetFeature(j+1)
         indv_species_geom = indv_species.GetGeometryRef()
         inter = indv_site_geom.Intersection(indv_species_geom)
         if inter != "GEOMETRYCOLLECTION EMPTY":
