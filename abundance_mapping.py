@@ -36,7 +36,6 @@ i=-1
 for groupname, groupdata, in grouped:
     i = i + 1
     colors = blues[i]
-    print colors
     map.plot(x, y, ls='', marker='o', color=colors)
 plt.show()
 
