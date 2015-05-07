@@ -20,6 +20,7 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None,
     plt.figure()
     map = Basemap(projection='merc',llcrnrlat=15,urcrnrlat=71, llcrnrlon=-170,urcrnrlon=-50,lat_ts=20,resolution='l')
     map.drawcoastlines(linewidth = 1.25)
+    map.drawstates()
     
     if not char_column:    
         lats = dataframe[lat_col]
@@ -74,9 +75,9 @@ def get_median_rarity_proportion(dataframe, species_column, proportion_column):
     med = np.median(uniq_prop)
     return med
 median_rarity = get_median_rarity_proportion(data_w_proportion, 'species', 'proportion')
-
 data_rare = data_w_proportion[data_w_proportion['proportion'] < median_rarity]
 
+#plot sites with rare species
 plot_sites_by_characteristic(data_rare, lat_col='lat', long_col='long')
 plt.savefig('rare_site_map.jpg')
 
@@ -114,12 +115,24 @@ else:
     selected_sites = get_sites_by_grid(data, 'site', 'lat', 'long', 100, 3)
     selected_sites.to_csv('selected_sites.csv')
 
-data_from_selected_sites = pd.merge(selected_sites, data, how='left', on='site')
+data_from_selected_sites = pd.merge(selected_sites, data, how='left', on=['site', 'lat', 'long'])
 selected_w_proportion = get_rarity_proportion(data_from_selected_sites, 'species', 'site')
 selected_median = get_median_rarity_proportion(selected_w_proportion, 'species', 'proportion')
 selected_rare = selected_w_proportion[selected_w_proportion['proportion'] < selected_median]
 
+#plot selected sites
 plot_sites_by_characteristic(selected_sites, lat_col='lat', long_col='long')
 plt.savefig('grid_selected_site_map.jpg')
-plot_sites_by_characteristic(selected_rare, 'lat_x', 'long_x')
+
+#plot sites with rare species
+plot_sites_by_characteristic(selected_rare, 'lat', 'long')
 plt.savefig('grid_selected_rare_site_map.jpg')
+
+#plot sites according to richness of rare species
+selected_rare = selected_rare.drop('proportion', 1)
+rarity_richness_by_site = macroecotools.richness_in_group(selected_rare, ['site', 'lat', 'long'], ['species'])
+plot_sites_by_characteristic(rarity_richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=2)
+
+#75th percentile richness
+data_rare_high = rarity_richness_by_site[rarity_richness_by_site['richness'] > 5]
+plot_sites_by_characteristic(data_rare_high, lat_col='lat', long_col='long', char_column='richness', bins=4)
