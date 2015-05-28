@@ -33,9 +33,9 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None,
         dataframe['quantile'] = pd.qcut(dataframe[char_column], bins)
         grouped = dataframe.groupby('quantile')
         
-        i=-1
+        i= bins
         for groupname, groupdata, in grouped:
-            i = i + 1
+            i = i - 1
             colors = blues[i]
             lats = groupdata["lat"]
             longs = groupdata["long"]
@@ -136,3 +136,15 @@ plot_sites_by_characteristic(rarity_richness_by_site, lat_col='lat', long_col='l
 #75th percentile richness
 data_rare_high = rarity_richness_by_site[rarity_richness_by_site['richness'] > 5]
 plot_sites_by_characteristic(data_rare_high, lat_col='lat', long_col='long', char_column='richness', bins=4)
+
+
+#range map
+range = pd.read_csv('rangemap_species.csv')
+range_abun = macroecotools.richness_in_group(range, ['site', 'lat', 'long'], ['sisid'])
+
+range_selected = pd.merge(selected_sites, range, how='left', on=['site', 'lat', 'long'])
+range_prop = get_rarity_proportion(range_selected, 'sisid', 'site')
+range_median = get_median_rarity_proportion(range_prop, 'sisid', 'proportion')
+range_rare = range_prop[range_prop['proportion'] < range_median]
+
+plot_sites_by_characteristic(range_abun, lat_col='lat', long_col='long', char_column='richness', bins=10)
