@@ -14,11 +14,11 @@ import glob
 import os
 
 #plot sites
-def plot_sites_by_characteristic(dataframe, lat_col, long_col, char_column=None, bins=None):
+def plot_sites_by_characteristic(dataframe, lat_col, long_col, title=None, char_column=None, bins=None):
     plt.figure()
     map = Basemap(projection='merc',llcrnrlat=15,urcrnrlat=71, llcrnrlon=-170,urcrnrlon=-50,lat_ts=20,resolution='l')
     map.drawcoastlines(linewidth = 1.25)
-    map.drawstates()
+    plt.title(title)
     
     if not char_column:    
         lats = dataframe[lat_col]
@@ -94,17 +94,17 @@ def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_
 data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
 
 #plot sites
-plot_sites_by_characteristic(data, 'lat', 'long')
+plot_sites_by_characteristic(data, 'lat', 'long', title='sites')
 
 #plot according to richness at site
 richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], ['species'])
-plot_sites_by_characteristic(richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=10)
+plot_sites_by_characteristic(richness_by_site, lat_col='lat', long_col='long', title='survey richness', char_column='richness', bins=10)
 
 #plot sites with rare species, not adjusted for spatial bias
 data_w_proportion = get_rarity_proportion(data, 'species', 'site')
 median_rarity = get_median_rarity_proportion(data_w_proportion, 'species', 'proportion')
 data_rare = data_w_proportion[data_w_proportion['proportion'] < median_rarity]
-plot_sites_by_characteristic(data_rare, lat_col='lat', long_col='long')
+#plot_sites_by_characteristic(data_rare, lat_col='lat', long_col='long')
 
 #plot selected sites to eliminate spatial bias
 if os.path.isfile('selected_sites.csv') == True:
@@ -114,8 +114,7 @@ else:
     selected_sites = get_sites_by_grid(data, 'site', 'lat', 'long', 100, 3)
     selected_sites.to_csv('selected_sites.csv')
     
-plot_sites_by_characteristic(selected_sites, lat_col='lat', long_col='long')
-plt.savefig('grid_selected_site_map.jpg')
+plot_sites_by_characteristic(selected_sites, lat_col='lat', long_col='long', title='grid-selected sites')
 
 #plot sites with rare species
 data_from_selected_sites = pd.merge(selected_sites, data, how='left', on=['site', 'lat', 'long'])
@@ -123,39 +122,49 @@ selected_w_proportion = get_rarity_proportion(data_from_selected_sites, 'species
 selected_median = get_median_rarity_proportion(selected_w_proportion, 'species', 'proportion')
 selected_rare = selected_w_proportion[selected_w_proportion['proportion'] < selected_median]
 
-plot_sites_by_characteristic(selected_rare, 'lat', 'long')
-plt.savefig('grid_selected_rare_site_map.jpg')
+plot_sites_by_characteristic(selected_rare, 'lat', 'long', title='sites with rare species (survey)')
 
 #plot sites according to richness of rare species
 selected_rare = selected_rare.drop('proportion', 1)
 rarity_richness_by_site = macroecotools.richness_in_group(selected_rare, ['site', 'lat', 'long'], ['species'])
-plot_sites_by_characteristic(rarity_richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=2)
+plot_sites_by_characteristic(rarity_richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=2, title='richness of rare species (survey)')
 
 #75th percentile richness
 data_rare_high = rarity_richness_by_site[rarity_richness_by_site['richness'] > 5]
-plot_sites_by_characteristic(data_rare_high, lat_col='lat', long_col='long', char_column='richness', bins=4)
+#plot_sites_by_characteristic(data_rare_high, lat_col='lat', long_col='long', char_column='richness', bins=4)
 
 
 #RANGE DATA
-range = pd.read_csv('rangemap_species.csv')
-range_abun = macroecotools.richness_in_group(range, ['site', 'lat', 'long'], ['sisid'])
+range_map = pd.read_csv('rangemap_species.csv')
+range_map = range_map.sort('site')
+range_abun = macroecotools.richness_in_group(range_map, ['site', 'lat', 'long'], ['sisid'])
 
-range_selected = pd.merge(selected_sites, range, how='left', on=['site', 'lat', 'long'])
+range_selected = pd.merge(selected_sites, range_map, how='left', on=['site', 'lat', 'long'])
 range_prop = get_rarity_proportion(range_selected, 'sisid', 'site')
 range_median = get_median_rarity_proportion(range_prop, 'sisid', 'proportion')
 range_rare = range_prop[range_prop['proportion'] < range_median]
 
 #plot range map abundance at site points
-plot_sites_by_characteristic(range_abun, lat_col='lat', long_col='long', char_column='richness', bins=10)
+plot_sites_by_characteristic(range_abun, lat_col='lat', long_col='long', char_column='richness', bins=10, title="range map richness")
 
 #plot sites with rare species
-plot_sites_by_characteristic(range_rare, 'lat', 'long')
+plot_sites_by_characteristic(range_rare, 'lat', 'long', title='sites with rare species (range)')
 
 #plot sites according to richness of rare species
 range_rare = range_rare.drop('proportion', 1)
 range_rarity_richness = macroecotools.richness_in_group(range_rare, ['site', 'lat', 'long'], ['sisid'])
-plot_sites_by_characteristic(range_rarity_richness, lat_col='lat', long_col='long', char_column='richness', bins=2)
+plot_sites_by_characteristic(range_rarity_richness, lat_col='lat', long_col='long', char_column='richness', bins=2, title='rare species richenss (range)')
 
 #75th percentile richness
 #range_rare_high = range_rarity_richness[range_rarity_richness['richness'] > 15]
 #plot_sites_by_characteristic(range_rare_high, lat_col='lat', long_col='long', char_column='richness', bins=4)
+
+
+#Range map rarity definition
+range_area = pd.read_csv('species_area.csv')
+range_area_uniq = range_area.groupby('sisid', as_index=False).sum()
+range_area_full = pd.merge(range_area_uniq, range_map, on=['sisid'])
+rare_range = range_area_full[range_area_full['shape_area'] < np.median(range_area_full['shape_area'])]
+rare_range_full = pd.merge(rare_range, range_abun, on=['site', 'lat', 'long'])
+
+plot_sites_by_characteristic(rare_range_full, 'lat', 'long', char_column='richness', bins=10, title='sites with small range species')
