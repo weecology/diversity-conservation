@@ -31,9 +31,9 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, title=None, char_
         dataframe['quantile'] = pd.qcut(dataframe[char_column], bins)
         grouped = dataframe.groupby('quantile')
         
-        i= bins
+        i= -1
         for groupname, groupdata, in grouped:
-            i = i - 1
+            i = i + 1
             colors = blues[i]
             lats = groupdata["lat"]
             longs = groupdata["long"]
@@ -164,7 +164,7 @@ plot_sites_by_characteristic(range_rarity_richness, lat_col='lat', long_col='lon
 range_area = pd.read_csv('species_area.csv')
 range_area_uniq = range_area.groupby('sisid', as_index=False).sum()
 range_area_full = pd.merge(range_area_uniq, range_map, on=['sisid'])
-rare_range = range_area_full[range_area_full['shape_area'] < np.median(range_area_full['shape_area'])]
+rare_range = range_area_full[range_area_full['shape_area'] < np.median(np.unique(range_area_full['shape_area']))]
 rare_range_full = pd.merge(rare_range, range_abun, on=['site', 'lat', 'long'])
 
 plot_sites_by_characteristic(rare_range_full, 'lat', 'long', char_column='richness', bins=10, title='sites with small range species')
