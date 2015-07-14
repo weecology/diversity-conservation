@@ -99,11 +99,12 @@ def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_
                 centroid_coordinates = centroid_coordinates.append([centroid, centroid, centroid])
             else:
                 centroid = get_centroid(corners)
-                data_selection = data_selection.append([1, 1, 1, 1])
+                data_selection = data_selection.append([1, 1, 1])
                 centroid_coordinates = centroid_coordinates.append([centroid])
         lat_start = lat_end
     return data_selection, centroid_coordinates
 
+data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
 selected_sites, centroid_coordinates = get_sites_by_grid(data, 'site', 'lat', 'long', 100, 3)
 
 #SURVEY DATA
