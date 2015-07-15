@@ -67,8 +67,9 @@ def get_median_rarity_proportion(dataframe, species_column, proportion_column):
 def get_centroid(points):  
     x = [p[0] for p in points]
     y = [p[1] for p in points]
-    centroid = (sum(x) / len(points), sum(y) / len(points))
-    return centroid
+    cent_lat = sum(x) / len(points)
+    cent_long = sum(y) / len(points)
+    return cent_lat, cent_long
 
 
 #grid sampling
@@ -81,6 +82,7 @@ def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_
     band_degrees = (band_width/40000)*360
     lat_start = min_lat - 0.001
     lat_end = lat_start
+    cellid = 0
     data_selection = pd.DataFrame()
     centroid_coordinates = pd.DataFrame()
     while lat_end < max_lat:
@@ -91,21 +93,21 @@ def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_
             long_end = long_end + band_degrees
             data_sub = dataframe[(dataframe[lat_col] > lat_start) & (dataframe[lat_col] < lat_end) & (dataframe[long_col] > long_start) & (dataframe[long_col] < long_end)]
             corners = [(lat_start, long_start), (lat_start, long_end), (lat_end, long_start), (lat_end, long_end)]
+            cent_lat, cent_long = get_centroid(corners)
+            cellid = cellid + 1
+            centroid_coordinates = centroid_coordinates.append([(cent_lat, cent_long, cellid)])
             long_start = long_end
             if len(data_sub['site']) >= sites_in_cell:
-                centroid = get_centroid(corners)
                 selection = data_sub.ix[random.sample(data_sub.index, sites_in_cell)]
+                selection['cellid'] = cellid                
                 data_selection = data_selection.append(selection)
-                centroid_coordinates = centroid_coordinates.append([centroid, centroid, centroid])
-            else:
-                centroid = get_centroid(corners)
-                data_selection = data_selection.append([1, 1, 1])
-                centroid_coordinates = centroid_coordinates.append([centroid])
         lat_start = lat_end
-    return data_selection, centroid_coordinates
+    centroid_coordinates.columns = ['cent_lat', 'cent_long', 'cellid']
+    cell_info = pd.merge(centroid_coordinates, data_selection, how = 'left', on = ['cellid'])
+    return cell_info
 
 data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
-selected_sites, centroid_coordinates = get_sites_by_grid(data, 'site', 'lat', 'long', 100, 3)
+cell_info = get_sites_by_grid(data, 'site', 'lat', 'long', 100, 3)
 
 #SURVEY DATA
 data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
