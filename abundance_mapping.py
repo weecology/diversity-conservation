@@ -106,9 +106,6 @@ def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_
     cell_info = pd.merge(centroid_coordinates, data_selection, how = 'left', on = ['cellid'])
     return cell_info
 
-data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
-cell_info = get_sites_by_grid(data, 'site', 'lat', 'long', 100, 3)
-
 #SURVEY DATA
 data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
 
@@ -187,3 +184,21 @@ rare_range = range_area_full[range_area_full['shape_area'] < np.median(np.unique
 rare_range_full = pd.merge(rare_range, range_abun, on=['site', 'lat', 'long'])
 
 plot_sites_by_characteristic(rare_range_full, 'lat', 'long', char_column='richness', bins=10, title='sites with small range species')
+
+#CELL MAPPING
+site_cell_abun = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], richness_by_site[['site', 'richness']], how='left', on=['site'])
+
+cell_abun = pd.DataFrame()
+for cell, celldata in site_cell_abun.groupby('cellid'):
+    abun = celldata['richness'].sum()
+    cell_abun = cell_abun.append([(cell, abun)])
+cell_abun.columns = ['cellid', 'total_richness']
+
+cell_abun_loc = pd.merge(site_cell_abun[['cent_lat', 'cent_long', 'cellid']], cell_abun, how='right', on= ['cellid'])
+
+lats = np.asarray(np.unique(cell_abun_loc['cent_lat']))
+lons = np.asarray(np.unique(cell_abun_loc['cent_long']))
+lons, lats = np.meshgrid(lons,lats)
+
+richness = np.array(cell_abun_loc['total_richness'])
+richness.shape = (49, 127)
