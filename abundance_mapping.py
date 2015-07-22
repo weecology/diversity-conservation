@@ -194,7 +194,7 @@ for cell, celldata in site_cell_abun.groupby('cellid'):
     cell_abun = cell_abun.append([(cell, abun)])
 cell_abun.columns = ['cellid', 'total_richness']
 
-cell_abun_loc = pd.merge(site_cell_abun[['cent_lat', 'cent_long', 'cellid']], cell_abun, how='right', on= ['cellid'])
+cell_abun_loc = pd.merge(site_cell_abun[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), cell_abun, how='right', on= ['cellid'])
 
 lats = np.asarray(np.unique(cell_abun_loc['cent_lat']))
 lons = np.asarray(np.unique(cell_abun_loc['cent_long']))
