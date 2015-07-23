@@ -6,6 +6,7 @@ import colorsys
 from numpy import log10
 import pandas as pd
 import numpy
+import numpy.ma as ma
 from mpl_toolkits.basemap import Basemap
 import macroecotools
 import seaborn as sns
@@ -202,3 +203,11 @@ lons, lats = np.meshgrid(lons,lats)
 
 richness = np.array(cell_abun_loc['total_richness'])
 richness.shape = (49, 127)
+richness_mask = ma.masked_where(np.isnan(richness),richness)
+
+fig = plt.figure()
+m = Basemap(projection='merc',llcrnrlat=15,urcrnrlat=71, llcrnrlon=-170,urcrnrlon=-50,lat_ts=20,resolution='l')
+m.drawcoastlines(linewidth = 1.25)
+im1 = m.pcolormesh(lons,lats,richness_mask,shading='flat',cmap=plt.cm.Blues,latlon=True)
+cb = m.colorbar(im1,"bottom", size="5%", pad="2%")
+plt.show()
