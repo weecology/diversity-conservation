@@ -205,9 +205,13 @@ richness = np.array(cell_abun_loc['total_richness'])
 richness.shape = (49, 127)
 richness_mask = ma.masked_where(np.isnan(richness),richness)
 
-fig = plt.figure()
-m = Basemap(projection='merc',llcrnrlat=15,urcrnrlat=71, llcrnrlon=-170,urcrnrlon=-50,lat_ts=20,resolution='l')
-m.drawcoastlines(linewidth = 1.25)
-im1 = m.pcolormesh(lons,lats,richness_mask,shading='flat',cmap=plt.cm.Blues,latlon=True)
-cb = m.colorbar(im1,"bottom", size="5%", pad="2%")
+def plot_cell_feature (long_array, lat_array, feature_array):
+    fig = plt.figure()
+    m = Basemap(projection='merc',llcrnrlat=15,urcrnrlat=71, llcrnrlon=-170,urcrnrlon=-50,lat_ts=20,resolution='l')
+    m.drawcoastlines(linewidth = 1.25)
+    im1 = m.pcolormesh(long_array,lat_array,feature_array,shading='flat',cmap=plt.cm.Blues,latlon=True)
+    cb = m.colorbar(im1,"bottom", size="5%", pad="2%")
+
+plot_cell_feature(lons, lats, richness_mask)
 plt.show()
+
