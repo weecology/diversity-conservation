@@ -215,3 +215,9 @@ def plot_cell_feature (long_array, lat_array, feature_array):
 plot_cell_feature(lons, lats, richness_mask)
 plt.show()
 
+#biodiversity estimates
+site_bio_est = pd.read_csv("site_biodiversity_estimates.csv", delimiter=",")
+sites = richness_by_site['site']
+site_bio_est = site_bio_est.join(sites)
+
+site_cell_abun_est = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], site_bio_est, how='left', on=['site'])
