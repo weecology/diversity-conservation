@@ -189,30 +189,30 @@ plot_sites_by_characteristic(rare_range_full, 'lat', 'long', char_column='richne
 #CELL MAPPING
 site_cell_abun = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], richness_by_site[['site', 'richness']], how='left', on=['site'])
 
-cell_abun = pd.DataFrame()
-for cell, celldata in site_cell_abun.groupby('cellid'):
-    abun = celldata['richness'].sum()
-    cell_abun = cell_abun.append([(cell, abun)])
-cell_abun.columns = ['cellid', 'total_richness']
+def plot_cell_feature (data, cell_id_column, cell_lat_column, cell_long_column, richness_column):
+    cell_abun = pd.DataFrame()
+    for cell, celldata in data.groupby(cell_id_column):
+        abun = celldata[richness_column].sum()
+        cell_abun = cell_abun.append([(cell, abun)])
+    cell_abun.columns = [cell_id_column, 'total_richness']
+    
+    cell_abun_loc = pd.merge(data[[cell_lat_column, cell_long_column, cell_id_column]].drop_duplicates(), cell_abun, how='right', on= [cell_id_column])
+    
+    lats = np.asarray(np.unique(cell_abun_loc[cell_lat_column]))
+    lons = np.asarray(np.unique(cell_abun_loc[cell_long_column]))
+    lons, lats = np.meshgrid(lons,lats)
+    
+    richness = np.array(cell_abun_loc['total_richness'])
+    richness.shape = (len(np.unique(lats)), len(np.unique(lons)))
+    richness_mask = ma.masked_where(np.isnan(richness),richness)
 
-cell_abun_loc = pd.merge(site_cell_abun[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), cell_abun, how='right', on= ['cellid'])
-
-lats = np.asarray(np.unique(cell_abun_loc['cent_lat']))
-lons = np.asarray(np.unique(cell_abun_loc['cent_long']))
-lons, lats = np.meshgrid(lons,lats)
-
-richness = np.array(cell_abun_loc['total_richness'])
-richness.shape = (49, 127)
-richness_mask = ma.masked_where(np.isnan(richness),richness)
-
-def plot_cell_feature (long_array, lat_array, feature_array):
     fig = plt.figure()
     m = Basemap(projection='merc',llcrnrlat=15,urcrnrlat=71, llcrnrlon=-170,urcrnrlon=-50,lat_ts=20,resolution='l')
     m.drawcoastlines(linewidth = 1.25)
-    im1 = m.pcolormesh(long_array,lat_array,feature_array,shading='flat',cmap=plt.cm.Blues,latlon=True)
+    im1 = m.pcolormesh(lons,lats,richness_mask,shading='flat',cmap=plt.cm.Blues,latlon=True)
     cb = m.colorbar(im1,"bottom", size="5%", pad="2%")
 
-plot_cell_feature(lons, lats, richness_mask)
+plot_cell_feature(site_cell_abun, 'cellid', 'cent_lat', 'cent_long', 'richness')
 plt.show()
 
 #biodiversity estimates
@@ -221,3 +221,4 @@ sites = richness_by_site['site']
 site_bio_est = site_bio_est.join(sites)
 
 site_cell_abun_est = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], site_bio_est, how='left', on=['site'])
+plot_cell_feature(site_cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab')
