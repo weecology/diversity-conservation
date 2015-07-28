@@ -222,3 +222,14 @@ site_bio_est = site_bio_est.join(sites)
 
 site_cell_abun_est = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], site_bio_est, how='left', on=['site'])
 plot_cell_feature(site_cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab')
+
+cell_bio_est = pd.read_csv("cell_estimates.csv", delimiter=",")
+uniq_cell = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], richness_by_site[['site', 'richness']], how='right', on=['site'])
+cells = np.unique(uniq_cell['cellid'].dropna())
+cells = pd.DataFrame(cells)
+cells.columns=['cellid']
+cell_bio_est = cell_bio_est.join(cells, lsuffix='_left', rsuffix='_right')
+cell_bio_est = cell_bio_est.drop(['cellid_left', 'cellid_right'], 1)
+cell_bio_est.columns = ['Ind', 'Obs', 'S1', 'S2', 'Jack1ab', 'Jack1abP', 'Jack2ab', 'Jack2abP', 'Chao1', 'Chao1P', 'cellid']
+cell_abun_est = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), cell_bio_est, how='left', on=['cellid'])
+plot_cell_feature(cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab')
