@@ -17,7 +17,7 @@ import os
 #plot sites
 def plot_sites_by_characteristic(dataframe, lat_col, long_col, title=None, char_column=None, bins=None):
     plt.figure()
-    map = Basemap(projection='merc',llcrnrlat=15,urcrnrlat=71, llcrnrlon=-170,urcrnrlon=-50,lat_ts=20,resolution='l')
+    map = Basemap(projection='merc',llcrnrlat=23.5,urcrnrlat=57, llcrnrlon=-140,urcrnrlon=-50,lat_ts=20,resolution='l')
     map.drawcoastlines(linewidth = 1.25)
     plt.title(title)
     
@@ -187,8 +187,6 @@ rare_range_full = pd.merge(rare_range, range_abun, on=['site', 'lat', 'long'])
 plot_sites_by_characteristic(rare_range_full, 'lat', 'long', char_column='richness', bins=10, title='sites with small range species')
 
 #CELL MAPPING
-site_cell_abun = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], richness_by_site[['site', 'richness']], how='left', on=['site'])
-
 def get_unique_cell_richness (data, cell_id_column, cell_lat_column, cell_long_column, speciesid_column):
     uniq_cell_abun = pd.DataFrame()
     for cell, cell_data in data.groupby(cell_id_column):
@@ -209,24 +207,19 @@ def plot_cell_feature (data, cell_id_column, cell_lat_column, cell_long_column, 
     richness_mask = ma.masked_where(np.isnan(richness),richness)
 
     fig = plt.figure()
-    m = Basemap(projection='merc',llcrnrlat=15,urcrnrlat=71, llcrnrlon=-170,urcrnrlon=-50,lat_ts=20,resolution='l')
+    m = Basemap(projection='merc',llcrnrlat=23.5,urcrnrlat=57, llcrnrlon=-140,urcrnrlon=-50,lat_ts=20,resolution='l')
     m.drawcoastlines(linewidth = 1.25)
     im1 = m.pcolormesh(lons,lats,richness_mask,shading='flat',cmap=plt.cm.Blues,latlon=True)
     cb = m.colorbar(im1,"bottom", size="5%", pad="2%")
     plt.title(title)
-    
 
-plot_cell_feature(site_cell_abun, 'cellid', 'cent_lat', 'cent_long', 'richness', title='Observed Abundance')
+#observed richness
+cell_site_species = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], data, how='left', on=['site'])
+uniq_cell_abun = get_unique_cell_richness(cell_site_species, 'cellid', 'cent_lat', 'cent_long', '_spid')   
+plot_cell_feature(uniq_cell_abun, 'cellid', 'cent_lat', 'cent_long', 'total_richness', title='Observed Abundance')
 plt.show()
 
-#biodiversity estimates
-site_bio_est = pd.read_csv("site_biodiversity_estimates.csv", delimiter=",")
-sites = richness_by_site['site']
-site_bio_est = site_bio_est.join(sites)
-
-site_cell_abun_est = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], site_bio_est, how='left', on=['site'])
-plot_cell_feature(site_cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab', title='Site Estimated Abundance')
-
+#estimated richness
 cell_bio_est = pd.read_csv("cell_estimates.csv", delimiter=",")
 uniq_cell = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], richness_by_site[['site', 'richness']], how='right', on=['site'])
 cells = np.unique(uniq_cell['cellid'].dropna())
@@ -237,13 +230,6 @@ cell_abun_est = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].dro
 plot_cell_feature(cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab', title='Cell Estimated Abundance')
 
 #range map
-range_cell_abun = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], range_abun[['site', 'richness']], how='left', on=['site'])
-plot_cell_feature(range_cell_abun, 'cellid', 'cent_lat', 'cent_long', 'richness', title='Rangemap, all taxa')
-
-#unique richness 
-
-cell_site_species = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], data, how='left', on=['site'])
-
-
-
-uniq_cell_abun = get_unique_cell_richness(cell_site_species, 'cellid', 'cent_lat', 'cent_long', '_spid')
+cell_range_species = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], range_map, how='left', on=['site'])
+uniq_range_cell = get_unique_cell_richness(cell_range_species, 'cellid', 'cent_lat', 'cent_long', '_spid')
+plot_cell_feature(uniq_range_cell, 'cellid', 'cent_lat', 'cent_long', 'total_richness', 'Range Map Richness')
