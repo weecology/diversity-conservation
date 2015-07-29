@@ -189,20 +189,22 @@ plot_sites_by_characteristic(rare_range_full, 'lat', 'long', char_column='richne
 #CELL MAPPING
 site_cell_abun = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], richness_by_site[['site', 'richness']], how='left', on=['site'])
 
-def plot_cell_feature (data, cell_id_column, cell_lat_column, cell_long_column, richness_column):
-    cell_abun = pd.DataFrame()
-    for cell, celldata in data.groupby(cell_id_column):
-        abun = celldata[richness_column].sum()
-        cell_abun = cell_abun.append([(cell, abun)])
-    cell_abun.columns = [cell_id_column, 'total_richness']
-    
-    cell_abun_loc = pd.merge(data[[cell_lat_column, cell_long_column, cell_id_column]].drop_duplicates(), cell_abun, how='right', on= [cell_id_column])
-    
-    lats = np.asarray(np.unique(cell_abun_loc[cell_lat_column]))
-    lons = np.asarray(np.unique(cell_abun_loc[cell_long_column]))
+def get_unique_cell_richness (data, cell_id_column, cell_lat_column, cell_long_column, speciesid_column):
+    uniq_cell_abun = pd.DataFrame()
+    for cell, cell_data in data.groupby(cell_id_column):
+        count = len(np.unique(cell_data[speciesid_column]))
+        uniq_cell_abun = uniq_cell_abun.append([(cell, count)])
+    uniq_cell_abun.columns = [cell_id_column, 'total_richness']
+    uniq_cell_abun = uniq_cell_abun[uniq_cell_abun['total_richness'] > 1]
+    uniq_cell_abun_loc = pd.merge(selected_sites[[cell_lat_column, cell_long_column, cell_id_column]].drop_duplicates(), uniq_cell_abun, how='left', on=[cell_id_column])
+    return uniq_cell_abun_loc
+
+def plot_cell_feature (data, cell_id_column, cell_lat_column, cell_long_column, richness_column, title=None):
+    lats = np.asarray(np.unique(data[cell_lat_column]))
+    lons = np.asarray(np.unique(data[cell_long_column]))
     lons, lats = np.meshgrid(lons,lats)
     
-    richness = np.array(cell_abun_loc['total_richness'])
+    richness = np.array(data[richness_column])
     richness.shape = (len(np.unique(lats)), len(np.unique(lons)))
     richness_mask = ma.masked_where(np.isnan(richness),richness)
 
@@ -211,8 +213,10 @@ def plot_cell_feature (data, cell_id_column, cell_lat_column, cell_long_column, 
     m.drawcoastlines(linewidth = 1.25)
     im1 = m.pcolormesh(lons,lats,richness_mask,shading='flat',cmap=plt.cm.Blues,latlon=True)
     cb = m.colorbar(im1,"bottom", size="5%", pad="2%")
+    plt.title(title)
+    
 
-plot_cell_feature(site_cell_abun, 'cellid', 'cent_lat', 'cent_long', 'richness')
+plot_cell_feature(site_cell_abun, 'cellid', 'cent_lat', 'cent_long', 'richness', title='Observed Abundance')
 plt.show()
 
 #biodiversity estimates
@@ -221,7 +225,7 @@ sites = richness_by_site['site']
 site_bio_est = site_bio_est.join(sites)
 
 site_cell_abun_est = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], site_bio_est, how='left', on=['site'])
-plot_cell_feature(site_cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab')
+plot_cell_feature(site_cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab', title='Site Estimated Abundance')
 
 cell_bio_est = pd.read_csv("cell_estimates.csv", delimiter=",")
 uniq_cell = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], richness_by_site[['site', 'richness']], how='right', on=['site'])
@@ -229,7 +233,17 @@ cells = np.unique(uniq_cell['cellid'].dropna())
 cells = pd.DataFrame(cells)
 cells.columns=['cellid']
 cell_bio_est = cell_bio_est.join(cells, lsuffix='_left', rsuffix='_right')
-cell_bio_est = cell_bio_est.drop(['cellid_left', 'cellid_right'], 1)
-cell_bio_est.columns = ['Ind', 'Obs', 'S1', 'S2', 'Jack1ab', 'Jack1abP', 'Jack2ab', 'Jack2abP', 'Chao1', 'Chao1P', 'cellid']
 cell_abun_est = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), cell_bio_est, how='left', on=['cellid'])
-plot_cell_feature(cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab')
+plot_cell_feature(cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab', title='Cell Estimated Abundance')
+
+#range map
+range_cell_abun = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], range_abun[['site', 'richness']], how='left', on=['site'])
+plot_cell_feature(range_cell_abun, 'cellid', 'cent_lat', 'cent_long', 'richness', title='Rangemap, all taxa')
+
+#unique richness 
+
+cell_site_species = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], data, how='left', on=['site'])
+
+
+
+uniq_cell_abun = get_unique_cell_richness(cell_site_species, 'cellid', 'cent_lat', 'cent_long', '_spid')
