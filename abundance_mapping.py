@@ -197,7 +197,7 @@ def get_unique_cell_richness (data, cell_id_column, cell_lat_column, cell_long_c
     uniq_cell_abun_loc = pd.merge(selected_sites[[cell_lat_column, cell_long_column, cell_id_column]].drop_duplicates(), uniq_cell_abun, how='left', on=[cell_id_column])
     return uniq_cell_abun_loc
 
-def plot_cell_feature (data, cell_id_column, cell_lat_column, cell_long_column, richness_column, title=None, hotspot_data=None, hotspot_column=None):
+def plot_cell_feature (data, cell_id_column, cell_lat_column, cell_long_column, richness_column, title=None, second_feature_data=None, second_feature_column=None):
     lats = np.asarray(np.unique(data[cell_lat_column]))
     lons = np.asarray(np.unique(data[cell_long_column]))
     lons, lats = np.meshgrid(lons,lats)
@@ -206,29 +206,35 @@ def plot_cell_feature (data, cell_id_column, cell_lat_column, cell_long_column, 
     richness.shape = (len(np.unique(lats)), len(np.unique(lons)))
     richness_mask = ma.masked_where(np.isnan(richness),richness)
     
-    hotspot = np.array(hotspot_data[hotspot_column])
-    hotspot.shape = (len(np.unique(lats)), len(np.unique(lons)))
-    hotspot_mask = ma.masked_where(np.isnan(hotspot),hotspot)
-    
+    if second_feature_data.empty == False:
+        print('yes')
+        second_feature = np.array(second_feature_data[second_feature_column])
+        second_feature.shape = (len(np.unique(lats)), len(np.unique(lons)))
+        second_feature_data_mask = ma.masked_where(np.isnan(second_feature),second_feature)
+        
     fig = plt.figure()
     m = Basemap(projection='merc',llcrnrlat=23.5,urcrnrlat=57, llcrnrlon=-140,urcrnrlon=-50,lat_ts=20,resolution='l')
     m.drawcoastlines(linewidth = 1.25)
     im1 = m.pcolormesh(lons,lats,richness_mask,shading='flat',cmap=plt.cm.Blues,latlon=True, vmin=round(np.nanmin(richness)-20, -1))
-    im2 = m.pcolormesh(lons,lats,hotspot_mask,shading='flat',cmap=plt.cm.Greens,latlon=True)
+    if second_feature_data.empty == False:
+        print('yes')
+        im2 = m.pcolormesh(lons,lats,second_feature_data_mask,shading='flat',cmap=plt.cm.gist_gray,latlon=True)
     cb = m.colorbar(im1,"bottom", size="5%", pad="2%")
     plt.title(title)
 
 #observed richness
 cell_site_species = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], data, how='left', on=['site'])
 uniq_cell_abun = get_unique_cell_richness(cell_site_species, 'cellid', 'cent_lat', 'cent_long', '_spid')   
-plot_cell_feature(uniq_cell_abun, 'cellid', 'cent_lat', 'cent_long', 'total_richness', title='Observed Abundance')
+plot_cell_feature(uniq_cell_abun, 'cellid', 'cent_lat', 'cent_long', 'total_richness', title='Observed Richness')
 
 cell_abun_sort = uniq_cell_abun.sort(['total_richness'], ascending=False)
-num_hotspot_cells = int(round(0.05 * len(np.unique(cell_abun_sort['total_richness']))))
+num_hotspot_cells = int(round(0.05 * (len(cell_abun_sort)-cell_abun_sort['total_richness'].isnull().sum())))
 hotspot_cells = cell_abun_sort.head(num_hotspot_cells)
 hotspot_cells['hotspot'] = [1]*num_hotspot_cells
 all_hotspot_cells = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), hotspot_cells, how='left', on=['cellid', 'cent_lat', 'cent_long'])
-plot_cell_feature(uniq_cell_abun, 'cellid', 'cent_lat', 'cent_long', 'total_richness', title='Observed Abundance with Hotspots', hotspot_data=all_hotspot_cells, hotspot_column='hotspot')
+plot_cell_feature(uniq_cell_abun, 'cellid', 'cent_lat', 'cent_long', 'total_richness', title='Observed Richness with Hotspots', second_feature_data=all_hotspot_cells, second_feature_column='hotspot')
+plot_cell_feature(all_hotspot_cells, 'cellid', 'cent_lat', 'cent_long', 'hotspot', title='Observed Richness Hotspots')
+
 
 #estimated richness
 cell_bio_est = pd.read_csv("cell_estimates.csv", delimiter=",")
@@ -238,9 +244,21 @@ cells = pd.DataFrame(cells)
 cells.columns=['cellid']
 cell_bio_est = cell_bio_est.join(cells, lsuffix='_left', rsuffix='_right')
 cell_abun_est = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), cell_bio_est, how='left', on=['cellid'])
-plot_cell_feature(cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab', title='Cell Estimated Abundance')
+plot_cell_feature(cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab', title='Cell Estimated Richness')
+
+cell_est_sort = cell_abun_est.sort(['Jack1ab'], ascending=False)
+est_hotspot_cells = cell_est_sort.head(num_hotspot_cells)
+est_hotspot_cells['hotspot'] = [1]*num_hotspot_cells
+all_est_hotspot_cells = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), est_hotspot_cells, how='left', on=['cellid', 'cent_lat', 'cent_long'])
+plot_cell_feature(all_est_hotspot_cells, 'cellid', 'cent_lat', 'cent_long', 'hotspot', title='Estimated Richness Hotspots')
 
 #range map
 cell_range_species = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], range_map, how='left', on=['site'])
 uniq_range_cell = get_unique_cell_richness(cell_range_species, 'cellid', 'cent_lat', 'cent_long', '_spid')
-plot_cell_feature(uniq_range_cell, 'cellid', 'cent_lat', 'cent_long', 'total_richness', 'Range Map Richness').d
+plot_cell_feature(uniq_range_cell, 'cellid', 'cent_lat', 'cent_long', 'total_richness', 'Range Map Richness')
+
+cell_range_sort = uniq_range_cell.sort(['total_richness'], ascending=False)
+range_hotspot_cells = cell_range_sort.head(num_hotspot_cells)
+range_hotspot_cells['hotspot'] = [1]*num_hotspot_cells
+all_range_hotspot_cells = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), range_hotspot_cells, how='left', on=['cellid', 'cent_lat', 'cent_long'])
+plot_cell_feature(all_range_hotspot_cells, 'cellid', 'cent_lat', 'cent_long', 'hotspot', title='Range Richness Hotspots')
