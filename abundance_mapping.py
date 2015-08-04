@@ -260,3 +260,11 @@ range_hotspot_cells = cell_range_sort.head(num_hotspot_cells)
 range_hotspot_cells['hotspot'] = [1]*num_hotspot_cells
 all_range_hotspot_cells = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), range_hotspot_cells, how='left', on=['cellid', 'cent_lat', 'cent_long'])
 plot_cell_feature(all_range_hotspot_cells, 'cellid', 'cent_lat', 'cent_long', 'hotspot', title='Range Richness Hotspots')
+
+#one to one plotting
+uniq_cell_abun.columns = ['cent_lat', 'cent_long', 'cellid', 'survey_richness']
+uniq_range_cell.columns = ['cent_lat', 'cent_long', 'cellid', 'range_richness']
+rich_comp = pd.merge(uniq_cell_abun, uniq_range_cell, how='left', on=['cent_lat', 'cent_long', 'cellid'])
+rich_comp['line'] = rich_comp['survey_richness']
+ax = rich_comp.plot(kind='scatter', x='survey_richness', y='range_richness', style='o')
+rich_comp.plot(x='survey_richness', kind='scatter', y = 'line', ax=ax)
