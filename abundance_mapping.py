@@ -206,8 +206,7 @@ def plot_cell_feature (data, cell_id_column, cell_lat_column, cell_long_column, 
     richness.shape = (len(np.unique(lats)), len(np.unique(lons)))
     richness_mask = ma.masked_where(np.isnan(richness),richness)
     
-    if second_feature_data.empty == False:
-        print('yes')
+    if second_feature_column:
         second_feature = np.array(second_feature_data[second_feature_column])
         second_feature.shape = (len(np.unique(lats)), len(np.unique(lons)))
         second_feature_data_mask = ma.masked_where(np.isnan(second_feature),second_feature)
@@ -216,8 +215,7 @@ def plot_cell_feature (data, cell_id_column, cell_lat_column, cell_long_column, 
     m = Basemap(projection='merc',llcrnrlat=23.5,urcrnrlat=57, llcrnrlon=-140,urcrnrlon=-50,lat_ts=20,resolution='l')
     m.drawcoastlines(linewidth = 1.25)
     im1 = m.pcolormesh(lons,lats,richness_mask,shading='flat',cmap=plt.cm.Blues,latlon=True, vmin=round(np.nanmin(richness)-20, -1))
-    if second_feature_data.empty == False:
-        print('yes')
+    if second_feature_column:
         im2 = m.pcolormesh(lons,lats,second_feature_data_mask,shading='flat',cmap=plt.cm.gist_gray,latlon=True)
     cb = m.colorbar(im1,"bottom", size="5%", pad="2%")
     plt.title(title)
