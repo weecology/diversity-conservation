@@ -3,7 +3,7 @@ from osgeo import ogr
 import os
 import pandas as pd
 
-os.chdir('/Users/karinorman/Documents/reserve_selection/data/BOTW')
+os.chdir('.../Documents/reserve_selection/data/BOTW')
 driver = ogr.GetDriverByName('OpenFileGDB')
 gdb = driver.Open("BOTW.gdb", 0)
     
