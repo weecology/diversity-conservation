@@ -53,11 +53,11 @@ def get_rarity_proportion(dataframe, species_column, site_column):
     total_sites = len(np.unique(dataframe[site_column]))
     rarity_prop = []
     for species, species_data in data_species:
-        occurence_sites = len(species_data[site_column])
+        occurence_sites = len(np.unique(species_data[site_column]))
         proportion = occurence_sites/total_sites
         rarity_prop.append([species, proportion])
     sp_rarity = pd.DataFrame(rarity_prop, columns=[species_column, 'proportion'])
-    data_w_proportion = pd.merge(sp_rarity, dataframe, on=species_column)
+    data_w_proportion = pd.merge(sp_rarity, dataframe, how='right', on=species_column)
     return data_w_proportion
 
 
@@ -276,3 +276,26 @@ rich_comp = pd.merge(uniq_cell_abun, uniq_range_cell, how='left', on=['cent_lat'
 rich_comp['line'] = rich_comp['survey_richness']
 ax = rich_comp.plot(kind='scatter', x='survey_richness', y='range_richness')
 plt.plot(rich_comp['survey_richness'], rich_comp['line'], 'k-')
+
+#bar plot of data type comparisons
+site_rich_comp = len(pd.merge(hotspot_sites_est, range_rich_hotspot, how='inner', on=['site', 'lat', 'long']))/len(hotspot_sites_est)
+site_rare_comp = len(pd.merge(site_hotspot, range_rare_hotspot, how='inner', on=['site', 'lat', 'long']))/len(range_rare_hotspot)
+cell_rich_comp = len(pd.merge(est_hotspot_cells, range_hotspot_cells, how='inner', on=['cellid', 'cent_lat', 'cent_long']))/len(est_hotspot_cells)
+cell_rare_comp = len(pd.merge(rare_survey_hotspot_cells, rare_range_hotspot_cells, how='inner', on=['cellid', 'cent_lat', 'cent_long']))/len(rare_survey_hotspot_cells)
+
+
+perc = [site_rich_comp, cell_rich_comp, site_rare_comp, cell_rare_comp]
+N = len(perc)
+ind = np.arange(N)
+width = 0.35
+
+fig, ax = plt.subplots()
+rects1 = ax.bar(ind, perc, width, color='brown')
+
+
+ax.bar(ind, perc, width, color='maroon')
+#ax.set_ylabel('Comparison Type')
+#ax.set_xlabel('Percentage Similar')
+tick_labels = ['site level richness', 'cell level richness', 'site level rarity', 'cell level rarity']
+ax.set_xticks(ind+width)
+ax.set_xticklabels(tick_labels)
