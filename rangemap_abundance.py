@@ -33,7 +33,7 @@ inDataSource = ogr.Open("bbs_sites_coordinates_wrapper.vrt")
 site_lyr = inDataSource.GetLayer('bbs_sites')
 for feat in site_lyr:
     geom = feat.GetGeometryRef()
-    print geom.ExportToWkt() 
+    print geom.ExportToWkt()
  
 species_count = pd.DataFrame()
 for i in range(site_lyr.GetFeatureCount()):
