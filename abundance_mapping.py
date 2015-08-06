@@ -129,10 +129,14 @@ data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
 
 #plot according to richness at site
 richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], ['species'])
-richness_by_site_sort = richness_by_site.sort(['richness'], ascending=False)
-hotspot_sites = richness_by_site_sort.head(round(len(richness_by_site_sort)*0.05))
-hotspot_sites_try = get_hotspots(richness_by_site, 'richness')
+hotspot_sites = get_hotspots(richness_by_site, 'richness')
 plot_sites_by_characteristic(richness_by_site, lat_col='lat', long_col='long', title='survey richness', char_column='richness', bins=10, dataframe2=hotspot_sites, lat_col2='lat', long_col2='long')
+#estimates
+data_est = pd.read_csv('site_biodiversity_estimates.csv', delimiter=',')
+data_est['site'] = richness_by_site['site']
+data_est = pd.merge(richness_by_site[['site', 'lat', 'long']], data_est, how='left', on='site')
+hotspot_sites_est = get_hotspots(data_est, 'Jack1ab')
+plot_sites_by_characteristic(data_est, lat_col='lat', long_col='long', title='survey richness estimates', char_column='Jack1ab', bins=10, dataframe2=hotspot_sites_est, lat_col2='lat', long_col2='long')
 
 #plot sites with rare species, not adjusted for spatial bias
 data_w_proportion = get_rarity_proportion(data, 'species', 'site')
