@@ -127,9 +127,6 @@ def get_hotspots(data, richness_column, cell=False):
 #SURVEY DATA
 data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
 
-#plot sites
-plot_sites_by_characteristic(data, 'lat', 'long', title='sites')
-
 #plot according to richness at site
 richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], ['species'])
 richness_by_site_sort = richness_by_site.sort(['richness'], ascending=False)
@@ -143,7 +140,6 @@ median_rarity = get_median_rarity_proportion(data_w_proportion, 'species', 'prop
 data_rare = data_w_proportion[data_w_proportion['proportion'] < median_rarity]
 #plot_sites_by_characteristic(data_rare, lat_col='lat', long_col='long')
 
-#plot selected sites to eliminate spatial bias
 if os.path.isfile('selected_sites.csv') == True:
     selected_sites = pd.read_csv('selected_sites.csv', delimiter=',')
     print ('yes')
@@ -151,26 +147,17 @@ else:
     selected_sites = get_sites_by_grid(data, 'site', 'lat', 'long', 100, 3)
     selected_sites.to_csv('selected_sites.csv')
     
-plot_sites_by_characteristic(selected_sites, lat_col='lat', long_col='long', title='grid-selected sites')
-
-#plot sites with rare species
+#find rare species
 data_from_selected_sites = pd.merge(selected_sites, data, how='left', on=['site', 'lat', 'long'])
 selected_w_proportion = get_rarity_proportion(data_from_selected_sites, 'species', 'site')
 selected_median = get_median_rarity_proportion(selected_w_proportion, 'species', 'proportion')
 selected_rare = selected_w_proportion[selected_w_proportion['proportion'] < selected_median]
-
-plot_sites_by_characteristic(selected_rare, 'lat', 'long', title='sites with rare species (survey)')
 
 #plot sites according to richness of rare species
 selected_rare = selected_rare.drop('proportion', 1)
 rarity_richness_by_site = macroecotools.richness_in_group(selected_rare, ['site', 'lat', 'long'], ['species'])
 site_hotspot = get_hotspots(rarity_richness_by_site, 'richness')
 plot_sites_by_characteristic(rarity_richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=2, title='survey rarity', dataframe2=site_hotspot, lat_col2='lat', long_col2='long')
-
-#75th percentile richness
-data_rare_high = rarity_richness_by_site[rarity_richness_by_site['richness'] > 5]
-#plot_sites_by_characteristic(data_rare_high, lat_col='lat', long_col='long', char_column='richness', bins=4)
-
 
 #RANGE DATA
 range_map = pd.read_csv('rangemap_species.csv')
@@ -186,18 +173,11 @@ range_rare = range_prop[range_prop['proportion'] < range_median]
 range_rich_hotspot = get_hotspots(range_abun, 'richness')
 plot_sites_by_characteristic(range_abun, lat_col='lat', long_col='long', char_column='richness', bins=10, title="range map richness", dataframe2=range_rich_hotspot, lat_col2='lat', long_col2='long')
 
-#plot sites with rare species
-plot_sites_by_characteristic(range_rare, 'lat', 'long', title='sites with rare species (range)')
-
 #plot sites according to richness of rare species
 range_rare = range_rare.drop('proportion', 1)
 range_rarity_richness = macroecotools.richness_in_group(range_rare, ['site', 'lat', 'long'], ['sisid'])
 range_rare_hotspot = get_hotspots(range_rarity_richness, 'richness')
 plot_sites_by_characteristic(range_rarity_richness, lat_col='lat', long_col='long', char_column='richness', bins=2, title='range rarity', dataframe2=range_rare_hotspot, lat_col2='lat', long_col2='long')
-
-#75th percentile richness
-#range_rare_high = range_rarity_richness[range_rarity_richness['richness'] > 15]
-#plot_sites_by_characteristic(range_rare_high, lat_col='lat', long_col='long', char_column='richness', bins=4)
 
 
 #Range map rarity definition
@@ -207,7 +187,7 @@ range_area_full = pd.merge(range_area_uniq, range_map, on=['sisid'])
 rare_range = range_area_full[range_area_full['shape_area'] < np.median(np.unique(range_area_full['shape_area']))]
 rare_range_full = pd.merge(rare_range, range_abun, on=['site', 'lat', 'long'])
 
-plot_sites_by_characteristic(rare_range_full, 'lat', 'long', char_column='richness', bins=10, title='sites with small range species')
+#plot_sites_by_characteristic(rare_range_full, 'lat', 'long', char_column='richness', bins=10, title='sites with small range species')
 
 #CELL MAPPING
 def get_unique_cell_richness (data, cell_id_column, cell_lat_column, cell_long_column, speciesid_column):
@@ -269,7 +249,6 @@ plot_cell_feature(cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab', t
 #range map
 cell_range_species = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], range_map, how='left', on=['site'])
 uniq_range_cell = get_unique_cell_richness(cell_range_species, 'cellid', 'cent_lat', 'cent_long', '_spid')
-plot_cell_feature(uniq_range_cell, 'cellid', 'cent_lat', 'cent_long', 'total_richness', 'Range Map Richness')
 range_hotspot_cells = get_hotspots(uniq_range_cell, 'total_richness', cell=True)
 all_range_hotspot_cells = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), range_hotspot_cells, how='left', on=['cellid', 'cent_lat', 'cent_long'])
 plot_cell_feature(uniq_range_cell, 'cellid', 'cent_lat', 'cent_long', 'total_richness', title='Range Richness Hotspots', second_feature_data=all_range_hotspot_cells, second_feature_column='hotspot')
