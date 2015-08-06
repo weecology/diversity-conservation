@@ -51,4 +51,3 @@ for i in range(site_lyr.GetFeatureCount()):
     species_count.append([indv_site.GetField('site'), len(num_species)])
     
 species_count.to_csv('rangemap_species_count.csv')
-
