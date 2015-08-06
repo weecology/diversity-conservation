@@ -1,11 +1,9 @@
 import numpy as np
 from osgeo import ogr
-import os
 import pandas as pd
 
-os.chdir('.../Documents/reserve_selection/data/BOTW')
 driver = ogr.GetDriverByName('OpenFileGDB')
-gdb = driver.Open("BOTW.gdb", 0)
+gdb = driver.Open("data/BOTW/BOTW.gdb", 0)
     
 # NOTES:
 # There is one layer, which includes polygons for all species
@@ -51,3 +49,5 @@ for i in range(site_lyr.GetFeatureCount()):
         if inter != "GEOMETRYCOLLECTION EMPTY":
             num_species.append(1)
     species_count.append([indv_site.GetField('site'), len(num_species)])
+    
+species_count.to_csv('rangemap_species_count.csv')
