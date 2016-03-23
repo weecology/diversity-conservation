@@ -1,9 +1,0 @@
-<OGRVRTDataSource>
-    <OGRVRTLayer name="bbs_sites">
-        <SrcDataSource>bbs_site_coordinates.csv</SrcDataSource>
-        <SrcLayer>bbs_site_coordinates</SrcLayer>
-        <GeometryType>wkbPoint</GeometryType>
-            <LayerSRS>WGS84</LayerSRS>
-        <GeometryField encoding="PointFromColumns" x="long" y="lat"/>
-    </OGRVRTLayer>
-</OGRVRTDataSource>
