@@ -278,10 +278,10 @@ ax = rich_comp.plot(kind='scatter', x='survey_richness', y='range_richness')
 plt.plot(rich_comp['survey_richness'], rich_comp['line'], 'k-')
 
 #bar plot of data type comparisons
-site_rich_comp = len(pd.merge(hotspot_sites_est, range_rich_hotspot, how='inner', on=['site', 'lat', 'long']))/len(hotspot_sites_est)
-site_rare_comp = len(pd.merge(site_hotspot, range_rare_hotspot, how='inner', on=['site', 'lat', 'long']))/len(range_rare_hotspot)
-cell_rich_comp = len(pd.merge(est_hotspot_cells, range_hotspot_cells, how='inner', on=['cellid', 'cent_lat', 'cent_long']))/len(est_hotspot_cells)
-cell_rare_comp = len(pd.merge(rare_survey_hotspot_cells, rare_range_hotspot_cells, how='inner', on=['cellid', 'cent_lat', 'cent_long']))/len(rare_survey_hotspot_cells)
+site_rich_comp = (len(pd.merge(hotspot_sites_est, range_rich_hotspot, how='inner', on=['site', 'lat', 'long']))*2)/(len(hotspot_sites_est)+len(range_rich_hotspot))
+site_rare_comp = (len(pd.merge(site_hotspot, range_rare_hotspot, how='inner', on=['site', 'lat', 'long']))*2)/(len(range_rare_hotspot)+len(site_hotspot))
+cell_rich_comp = (len(pd.merge(est_hotspot_cells, range_hotspot_cells, how='inner', on=['cellid', 'cent_lat', 'cent_long']))*2)/(len(est_hotspot_cells)+len(range_hotspot_cells))
+cell_rare_comp = (len(pd.merge(rare_survey_hotspot_cells, rare_range_hotspot_cells, how='inner', on=['cellid', 'cent_lat', 'cent_long']))*2)/(len(rare_survey_hotspot_cells)+len(rare_range_hotspot_cells))
 
 
 perc = [site_rich_comp, cell_rich_comp, site_rare_comp, cell_rare_comp]
@@ -295,7 +295,35 @@ rects1 = ax.bar(ind, perc, width, color='brown')
 
 ax.bar(ind, perc, width, color='maroon')
 #ax.set_ylabel('Comparison Type')
-#ax.set_xlabel('Percentage Similar')
+ax.set_ylabel('Hotspot Similarity Percentage')
 tick_labels = ['site level richness', 'cell level richness', 'site level rarity', 'cell level rarity']
 ax.set_xticks(ind+width)
 ax.set_xticklabels(tick_labels)
+
+#RARITY WEIGHTED RICHNESS
+#survey data
+def rwr_priority_sites(data, species_col):
+    rwr_data = pd.DataFrame()
+    for species, species_data in data.groupby(species_col):
+        rwr_data = rwr_data.append([(species, 1/(len(species_data)))])
+    rwr_data.columns = [species_col,'rwr']
+    rwr_data = pd.merge(rwr_data, data, how='right', on=species_col)
+    
+    rwr_sites = pd.DataFrame()
+    for site, site_data in rwr_data.groupby('site'):
+        rwr_sum = site_data['rwr'].sum()
+        rwr_sites = rwr_sites.append([(site, rwr_sum)])
+    rwr_sites.columns = ['site', 'rwr']
+    rwr_sites = rwr_sites.sort('rwr', ascending = False)
+    
+    num_rwrs = int(round(0.05 * len(rwr_sites)))
+    rwr_sites = rwr_sites[:num_rwrs]
+    rwr_sites_data = pd.merge(rwr_sites[['site']], data[['site', 'lat', 'long']], how='left', on='site')
+    rwr_sites_data = rwr_sites_data.drop_duplicates()
+    return rwr_sites_data
+
+rwr_sites_survey = rwr_priority_sites(data_from_selected_sites, 'species')
+rwr_sites_range = rwr_priority_sites(range_selected, 'sisid')
+
+plot_sites_by_characteristic(rwr_sites_survey, 'lat', 'long', title='RWR Sites Survey Data')
+plot_sites_by_characteristic(rwr_sites_range, 'lat', 'long', title='RWR Sites Range Data')
