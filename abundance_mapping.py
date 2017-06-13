@@ -125,10 +125,16 @@ def get_hotspots(data, richness_column, cell=False):
 
 
 #SURVEY DATA
-data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
+data = pd.read_csv('data/bbs_data.csv', delimiter=',')
+year_subset = data[(data['year'] <= 2015) & (data['year'] >= 2005)]
+#year_subset = data[(data['year'] <= 2010) & (data['year'] >= 2005)]
+#year_subset = data[(data['year'] <= 2015) & (data['year'] >= 2010)]
+#year_subset = data[(data['year'] <= 1995) & (data['year'] >= 1985)]
+
+richness_by_site = macroecotools.richness_in_group(year_subset, 
+                                                   ['site_id', 'lat', 'long'], ['species_id'])
 
 #plot according to richness at site
-richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], ['species'])
 hotspot_sites = get_hotspots(richness_by_site, 'richness')
 plot_sites_by_characteristic(richness_by_site, lat_col='lat', long_col='long', title='survey richness', char_column='richness', bins=10, dataframe2=hotspot_sites, lat_col2='lat', long_col2='long')
 #estimates
