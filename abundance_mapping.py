@@ -81,7 +81,7 @@ def get_centroid(points):
 
 #grid sampling
 def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_in_cell):
-    dataframe = dataframe[['site', 'lat', 'long']].drop_duplicates()
+    dataframe = dataframe[[site_col, lat_col, long_col]].drop_duplicates()
     min_lat = min(dataframe[lat_col])
     max_lat = max(dataframe[lat_col])
     min_long = min(dataframe[long_col])
@@ -104,7 +104,7 @@ def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_
             cellid = cellid + 1
             centroid_coordinates = centroid_coordinates.append([(cent_lat, cent_long, cellid)])
             long_start = long_end
-            if len(data_sub['site']) >= sites_in_cell:
+            if len(data_sub[site_col]) >= sites_in_cell:
                 selection = data_sub.ix[random.sample(data_sub.index, sites_in_cell)]
                 selection['cellid'] = cellid                
                 data_selection = data_selection.append(selection)
@@ -124,16 +124,31 @@ def get_hotspots(data, richness_column, cell=False):
     return hotspots
 
 
+included_species = pd.read_csv('data/taxonomy/included_species_ids.csv')
+#clean up excluded families
+included_species = included_species[(included_species['AOU'] > 2880)]
+included_species = included_species[(included_species['AOU'] < 3650) | (included_species['AOU'] > 3810)]
+included_species = included_species[(included_species['AOU'] < 3900) | (included_species['AOU'] > 3910)]
+included_species = included_species[(included_species['AOU'] < 4160) | (included_species['AOU'] > 4210)]
+included_species = included_species[(included_species['AOU'] != 7010)]
+included_species.rename(columns= {'AOU':'species'}, inplace = True)
+AOU_list = pd.DataFrame(included_species['species'])
+
 #SURVEY DATA
-data = pd.read_csv('data/bbs_data.csv', delimiter=',')
-data.columns.values[0] = 'site'
+#formatting
+data = pd.read_csv('data/bbs_species_2016.csv', delimiter=',', sep='\s*,\s*')
+data.rename(columns = {'site_id':'site'}, inplace = True)
+data.rename(columns = {'species_id':'species'}, inplace = True)
+data = pd.merge(data, AOU_list, how='inner', on=['species']) #exclude species whose ranges are not mostly in north america
+
+
 year_subset = data[(data['year'] <= 2015) & (data['year'] >= 2005)]
 #year_subset = data[(data['year'] <= 2010) & (data['year'] >= 2005)]
 #year_subset = data[(data['year'] <= 2015) & (data['year'] >= 2010)]
 #year_subset = data[(data['year'] <= 1995) & (data['year'] >= 1985)]
 
 richness_by_site = macroecotools.richness_in_group(year_subset, 
-                                                   ['site', 'lat', 'long'], ['species_id'])
+                                                   ['site', 'lat', 'long'], ['species'])
 
 #plot according to richness at site
 hotspot_sites = get_hotspots(richness_by_site, 'richness')
