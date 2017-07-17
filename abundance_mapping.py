@@ -133,6 +133,7 @@ included_species = included_species[(included_species['AOU'] < 4160) | (included
 included_species = included_species[(included_species['AOU'] != 7010)]
 included_species.rename(columns= {'AOU':'species'}, inplace = True)
 AOU_list = pd.DataFrame(included_species['species'])
+sisid_list = pd.DataFrame(included_species['sisid'])
 
 #SURVEY DATA
 #formatting
@@ -186,8 +187,9 @@ site_hotspot = get_hotspots(rarity_richness_by_site, 'richness')
 plot_sites_by_characteristic(rarity_richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=2, title='survey rarity', dataframe2=site_hotspot, lat_col2='lat', long_col2='long')
 
 #RANGE DATA
-range_map = pd.read_csv('rangemap_species.csv')
+range_map = pd.read_csv('data/rangemap_species_2016.csv')
 range_map = range_map.sort('site')
+range_map = pd.merge(range_map, sisid_list, how='inner', on=['sisid'])
 range_abun = macroecotools.richness_in_group(range_map, ['site', 'lat', 'long'], ['sisid'])
 
 range_selected = pd.merge(selected_sites, range_map, how='left', on=['site', 'lat', 'long'])
