@@ -81,7 +81,7 @@ def get_centroid(points):
 
 #grid sampling
 def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_in_cell):
-    dataframe = dataframe[['site', 'lat', 'long']].drop_duplicates()
+    dataframe = dataframe[[site_col, lat_col, long_col]].drop_duplicates()
     min_lat = min(dataframe[lat_col])
     max_lat = max(dataframe[lat_col])
     min_long = min(dataframe[long_col])
@@ -104,7 +104,7 @@ def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_
             cellid = cellid + 1
             centroid_coordinates = centroid_coordinates.append([(cent_lat, cent_long, cellid)])
             long_start = long_end
-            if len(data_sub['site']) >= sites_in_cell:
+            if len(data_sub[site_col]) >= sites_in_cell:
                 selection = data_sub.ix[random.sample(data_sub.index, sites_in_cell)]
                 selection['cellid'] = cellid                
                 data_selection = data_selection.append(selection)
@@ -124,19 +124,42 @@ def get_hotspots(data, richness_column, cell=False):
     return hotspots
 
 
+included_species = pd.read_csv('data/taxonomy/included_species_ids.csv')
+#clean up excluded families
+included_species = included_species[(included_species['AOU'] > 2880)]
+included_species = included_species[(included_species['AOU'] < 3650) | (included_species['AOU'] > 3810)]
+included_species = included_species[(included_species['AOU'] < 3900) | (included_species['AOU'] > 3910)]
+included_species = included_species[(included_species['AOU'] < 4160) | (included_species['AOU'] > 4210)]
+included_species = included_species[(included_species['AOU'] != 7010)]
+included_species.rename(columns= {'AOU':'species'}, inplace = True)
+AOU_list = pd.DataFrame(included_species['species'])
+sisid_list = pd.DataFrame(included_species['sisid'])
+
 #SURVEY DATA
-data = pd.read_csv('bbs_abundances_by_site.csv', delimiter=',')
+#formatting
+data = pd.read_csv('data/bbs_species_2016.csv', delimiter=',', sep='\s*,\s*')
+data.rename(columns = {'site_id':'site'}, inplace = True)
+data.rename(columns = {'species_id':'species'}, inplace = True)
+data = pd.merge(data, AOU_list, how='inner', on=['species']) #exclude species whose ranges are not mostly in north america
+
+
+year_subset = data[(data['year'] <= 2015) & (data['year'] >= 2005)]
+#year_subset = data[(data['year'] <= 2010) & (data['year'] >= 2005)]
+#year_subset = data[(data['year'] <= 2015) & (data['year'] >= 2010)]
+#year_subset = data[(data['year'] <= 1995) & (data['year'] >= 1985)]
+
+richness_by_site = macroecotools.richness_in_group(year_subset, 
+                                                   ['site', 'lat', 'long'], ['species'])
 
 #plot according to richness at site
-richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], ['species'])
 hotspot_sites = get_hotspots(richness_by_site, 'richness')
 plot_sites_by_characteristic(richness_by_site, lat_col='lat', long_col='long', title='survey richness', char_column='richness', bins=10, dataframe2=hotspot_sites, lat_col2='lat', long_col2='long')
-#estimates
-data_est = pd.read_csv('site_biodiversity_estimates.csv', delimiter=',')
-data_est['site'] = richness_by_site['site']
-data_est = pd.merge(richness_by_site[['site', 'lat', 'long']], data_est, how='left', on='site')
-hotspot_sites_est = get_hotspots(data_est, 'Jack1ab')
-plot_sites_by_characteristic(data_est, lat_col='lat', long_col='long', title='survey richness estimates', char_column='Jack1ab', bins=10, dataframe2=hotspot_sites_est, lat_col2='lat', long_col2='long')
+##estimates
+#data_est = pd.read_csv('site_biodiversity_estimates.csv', delimiter=',')
+#data_est['site'] = richness_by_site['site']
+#data_est = pd.merge(richness_by_site[['site', 'lat', 'long']], data_est, how='left', on='site')
+#hotspot_sites_est = get_hotspots(data_est, 'Jack1ab')
+#plot_sites_by_characteristic(data_est, lat_col='lat', long_col='long', title='survey richness estimates', char_column='Jack1ab', bins=10, dataframe2=hotspot_sites_est, lat_col2='lat', long_col2='long')
 
 #plot sites with rare species, not adjusted for spatial bias
 data_w_proportion = get_rarity_proportion(data, 'species', 'site')
@@ -161,11 +184,13 @@ selected_rare = selected_w_proportion[selected_w_proportion['proportion'] < sele
 selected_rare = selected_rare.drop('proportion', 1)
 rarity_richness_by_site = macroecotools.richness_in_group(selected_rare, ['site', 'lat', 'long'], ['species'])
 site_hotspot = get_hotspots(rarity_richness_by_site, 'richness')
-plot_sites_by_characteristic(rarity_richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=2, title='survey rarity', dataframe2=site_hotspot, lat_col2='lat', long_col2='long')
+plot_sites_by_characteristic(rarity_richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=10, title='survey rarity', dataframe2=site_hotspot, lat_col2='lat', long_col2='long')
 
 #RANGE DATA
-range_map = pd.read_csv('rangemap_species.csv')
+range_map = pd.read_csv('data/rangemap_species_2016.csv', usecols=['site', 'sisid'])
+range_map = pd.merge(range_map, richness_by_site[['site', 'lat', 'long']], on = 'site', how = 'left')
 range_map = range_map.sort('site')
+range_map = pd.merge(range_map, sisid_list, how='inner', on=['sisid'])
 range_abun = macroecotools.richness_in_group(range_map, ['site', 'lat', 'long'], ['sisid'])
 
 range_selected = pd.merge(selected_sites, range_map, how='left', on=['site', 'lat', 'long'])
@@ -181,15 +206,15 @@ plot_sites_by_characteristic(range_abun, lat_col='lat', long_col='long', char_co
 range_rare = range_rare.drop('proportion', 1)
 range_rarity_richness = macroecotools.richness_in_group(range_rare, ['site', 'lat', 'long'], ['sisid'])
 range_rare_hotspot = get_hotspots(range_rarity_richness, 'richness')
-plot_sites_by_characteristic(range_rarity_richness, lat_col='lat', long_col='long', char_column='richness', bins=2, title='range rarity', dataframe2=range_rare_hotspot, lat_col2='lat', long_col2='long')
+plot_sites_by_characteristic(range_rarity_richness, lat_col='lat', long_col='long', char_column='richness', bins=10, title='range rarity', dataframe2=range_rare_hotspot, lat_col2='lat', long_col2='long')
 
 
-#Range map rarity definition
-range_area = pd.read_csv('species_area.csv')
-range_area_uniq = range_area.groupby('sisid', as_index=False).sum()
-range_area_full = pd.merge(range_area_uniq, range_map, on=['sisid'])
-rare_range = range_area_full[range_area_full['shape_area'] < np.median(np.unique(range_area_full['shape_area']))]
-rare_range_full = pd.merge(rare_range, range_abun, on=['site', 'lat', 'long'])
+##Range map rarity definition
+#range_area = pd.read_csv('species_area.csv')
+#range_area_uniq = range_area.groupby('sisid', as_index=False).sum()
+#range_area_full = pd.merge(range_area_uniq, range_map, on=['sisid'])
+#rare_range = range_area_full[range_area_full['shape_area'] < np.median(np.unique(range_area_full['shape_area']))]
+#rare_range_full = pd.merge(rare_range, range_abun, on=['site', 'lat', 'long'])
 
 #plot_sites_by_characteristic(rare_range_full, 'lat', 'long', char_column='richness', bins=10, title='sites with small range species')
 
@@ -238,17 +263,17 @@ obs_hotspot_cell = get_hotspots(uniq_cell_abun, 'total_richness', cell=True)
 all_hotspot_cell = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), obs_hotspot_cell, how='left', on=['cellid', 'cent_lat', 'cent_long'])
 plot_cell_feature(uniq_cell_abun, 'cellid', 'cent_lat', 'cent_long', 'total_richness', title='Observed Survey Richness with Hotspots', second_feature_data=all_hotspot_cell, second_feature_column='hotspot')
 
-#estimated richness
-cell_bio_est = pd.read_csv("cell_estimates.csv", delimiter=",")
-uniq_cell = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], richness_by_site[['site', 'richness']], how='right', on=['site'])
-cells = np.unique(uniq_cell['cellid'].dropna())
-cells = pd.DataFrame(cells)
-cells.columns=['cellid']
-cell_bio_est = cell_bio_est.join(cells, lsuffix='_left', rsuffix='_right')
-cell_abun_est = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), cell_bio_est, how='left', on=['cellid'])
-est_hotspot_cells = get_hotspots(cell_abun_est, 'Jack1ab', cell=True)
-all_est_hotspot_cells = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), est_hotspot_cells, how='left', on=['cellid', 'cent_lat', 'cent_long'])
-plot_cell_feature(cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab', title='Estimated Survey Richness with Hotspots', second_feature_data=all_est_hotspot_cells, second_feature_column='hotspot')
+##estimated richness
+#cell_bio_est = pd.read_csv("cell_estimates.csv", delimiter=",")
+#uniq_cell = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], richness_by_site[['site', 'richness']], how='right', on=['site'])
+#cells = np.unique(uniq_cell['cellid'].dropna())
+#cells = pd.DataFrame(cells)
+#cells.columns=['cellid']
+#cell_bio_est = cell_bio_est.join(cells, lsuffix='_left', rsuffix='_right')
+#cell_abun_est = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), cell_bio_est, how='left', on=['cellid'])
+#est_hotspot_cells = get_hotspots(cell_abun_est, 'Jack1ab', cell=True)
+#all_est_hotspot_cells = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), est_hotspot_cells, how='left', on=['cellid', 'cent_lat', 'cent_long'])
+#plot_cell_feature(cell_abun_est, 'cellid', 'cent_lat', 'cent_long', 'Jack1ab', title='Estimated Survey Richness with Hotspots', second_feature_data=all_est_hotspot_cells, second_feature_column='hotspot')
 
 #range map
 cell_range_species = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], range_map, how='left', on=['site'])
@@ -258,7 +283,7 @@ all_range_hotspot_cells = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cel
 plot_cell_feature(uniq_range_cell, 'cellid', 'cent_lat', 'cent_long', 'total_richness', title='Range Richness Hotspots', second_feature_data=all_range_hotspot_cells, second_feature_column='hotspot')
 
 #rare species
-rare_survey_cell = get_unique_cell_richness(selected_rare[['cent_lat', 'cent_long', 'cellid', 'site', 'lat', 'long', 'count', '_spid']], 'cellid', 'cent_lat', 'cent_long', '_spid')
+rare_survey_cell = get_unique_cell_richness(selected_rare[['cent_lat', 'cent_long', 'cellid', 'site', 'lat', 'long', 'abundance', 'species']], 'cellid', 'cent_lat', 'cent_long', 'species')
 rare_survey_hotspot_cells = get_hotspots(rare_survey_cell, 'total_richness', cell=True)
 all_rare_survey_hotspot_cells = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), rare_survey_hotspot_cells, how='left', on=['cellid', 'cent_lat', 'cent_long'])
 plot_cell_feature(rare_survey_cell, 'cellid', 'cent_lat', 'cent_long', 'total_richness', 'Rare Survey Richness with Hotspots', second_feature_data=all_rare_survey_hotspot_cells, second_feature_column='hotspot')
@@ -308,13 +333,13 @@ plot_sites_by_characteristic(rwr_sites_range, 'lat', 'long', title='RWR Sites Ra
 
 
 #bar plot of data type comparisons
-site_rich_comp = (len(pd.merge(hotspot_sites_est, range_rich_hotspot, how='inner', on=['site', 'lat', 'long']))*2)/(len(hotspot_sites_est)+len(range_rich_hotspot))
+site_rich_comp = (len(pd.merge(hotspot_sites, range_rich_hotspot, how='inner', on=['site', 'lat', 'long']))*2)/(len(hotspot_sites)+len(range_rich_hotspot))
 site_rare_comp = (len(pd.merge(site_hotspot, range_rare_hotspot, how='inner', on=['site', 'lat', 'long']))*2)/(len(range_rare_hotspot)+len(site_hotspot))
-cell_rich_comp = (len(pd.merge(est_hotspot_cells, range_hotspot_cells, how='inner', on=['cellid', 'cent_lat', 'cent_long']))*2)/(len(est_hotspot_cells)+len(range_hotspot_cells))
+cell_rich_comp = (len(pd.merge(obs_hotspot_cell, range_hotspot_cells, how='inner', on=['cellid', 'cent_lat', 'cent_long']))*2)/(len(obs_hotspot_cell)+len(range_hotspot_cells))
 cell_rare_comp = (len(pd.merge(rare_survey_hotspot_cells, rare_range_hotspot_cells, how='inner', on=['cellid', 'cent_lat', 'cent_long']))*2)/(len(rare_survey_hotspot_cells)+len(rare_range_hotspot_cells))
 rwr_comp = (len(pd.merge(rwr_sites_survey, rwr_sites_range, how='inner', on=['site', 'lat', 'long']))*2)/(len(rwr_sites_survey)+len(rwr_sites_range))
 
-perc = [site_rich_comp, cell_rich_comp, site_rare_comp, cell_rare_comp, rwr_comp]
+perc = [site_rich_comp, cell_rich_comp, site_rare_comp, cell_rare_comp]
 N = len(perc)
 ind = np.arange(N)
 width = 0.35
@@ -326,6 +351,6 @@ rects1 = ax.bar(ind, perc, width, color='brown')
 ax.bar(ind, perc, width, color='maroon')
 #ax.set_ylabel('Comparison Type')
 ax.set_ylabel('Hotspot Similarity Percentage')
-tick_labels = ['site level richness', 'cell level richness', 'site level rarity', 'cell level rarity', 'site level RWR richness']
+tick_labels = ['site level richness', 'cell level richness', 'site level rarity', 'cell level rarity']
 ax.set_xticks(ind+width)
 ax.set_xticklabels(tick_labels)
