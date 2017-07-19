@@ -124,7 +124,7 @@ def get_hotspots(data, richness_column, cell=False):
     return hotspots
 
 
-included_species = pd.read_csv('data/taxonomy/included_species_ids.csv')
+included_species = pd.read_csv('mapping_data/included_species_ids.csv')
 #clean up excluded families
 included_species = included_species[(included_species['AOU'] > 2880)]
 included_species = included_species[(included_species['AOU'] < 3650) | (included_species['AOU'] > 3810)]
@@ -137,7 +137,7 @@ sisid_list = pd.DataFrame(included_species['sisid'])
 
 #SURVEY DATA
 #formatting
-data = pd.read_csv('data/bbs_species_2016.csv', delimiter=',', sep='\s*,\s*')
+data = pd.read_csv('mapping_data/bbs_species_2016.csv', delimiter=',', sep='\s*,\s*')
 data.rename(columns = {'site_id':'site'}, inplace = True)
 data.rename(columns = {'species_id':'species'}, inplace = True)
 data = pd.merge(data, AOU_list, how='inner', on=['species']) #exclude species whose ranges are not mostly in north america
@@ -187,7 +187,7 @@ site_hotspot = get_hotspots(rarity_richness_by_site, 'richness')
 plot_sites_by_characteristic(rarity_richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=10, title='survey rarity', dataframe2=site_hotspot, lat_col2='lat', long_col2='long')
 
 #RANGE DATA
-range_map = pd.read_csv('data/rangemap_species_2016.csv', usecols=['site', 'sisid'])
+range_map = pd.read_csv('mapping_data/rangemap_species_2016.csv', usecols=['site', 'sisid'])
 range_map = pd.merge(range_map, richness_by_site[['site', 'lat', 'long']], on = 'site', how = 'left')
 range_map = range_map.sort('site')
 range_map = pd.merge(range_map, sisid_list, how='inner', on=['sisid'])
