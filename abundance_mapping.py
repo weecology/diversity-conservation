@@ -116,7 +116,7 @@ def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_
 def get_hotspots(data, richness_column, cell=False):
     sort = data.sort([richness_column], ascending=False)
     if cell is False:
-        hotspots = sort.head(round(len(sort)*0.05))
+        hotspots = sort.head(int(round(len(sort)*0.05)))
     else:
         num_hotspots = int(round(0.05 * (len(sort)-sort[richness_column].isnull().sum())))
         hotspots = sort.head(num_hotspots)
