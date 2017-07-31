@@ -349,7 +349,7 @@ rects1 = ax.bar(ind, perc, width, color='brown')
 
 
 ax.bar(ind, perc, width, color='maroon')
-#ax.set_ylabel('Comparison Type')
+ax.set_ylim([0,1])
 ax.set_ylabel('Hotspot Similarity Percentage')
 tick_labels = ['site level richness', 'cell level richness', 'site level rarity', 'cell level rarity']
 ax.set_xticks(ind+width)
