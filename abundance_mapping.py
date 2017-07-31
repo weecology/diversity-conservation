@@ -116,7 +116,7 @@ def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_
 def get_hotspots(data, richness_column, cell=False):
     sort = data.sort([richness_column], ascending=False)
     if cell is False:
-        hotspots = sort.head(round(len(sort)*0.05))
+        hotspots = sort.head(int(round(len(sort)*0.05)))
     else:
         num_hotspots = int(round(0.05 * (len(sort)-sort[richness_column].isnull().sum())))
         hotspots = sort.head(num_hotspots)
@@ -277,7 +277,7 @@ plot_cell_feature(uniq_cell_abun, 'cellid', 'cent_lat', 'cent_long', 'total_rich
 
 #range map
 cell_range_species = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid', 'site']], range_map, how='left', on=['site'])
-uniq_range_cell = get_unique_cell_richness(cell_range_species, 'cellid', 'cent_lat', 'cent_long', '_spid')
+uniq_range_cell = get_unique_cell_richness(cell_range_species, 'cellid', 'cent_lat', 'cent_long', 'sisid')
 range_hotspot_cells = get_hotspots(uniq_range_cell, 'total_richness', cell=True)
 all_range_hotspot_cells = pd.merge(selected_sites[['cent_lat', 'cent_long', 'cellid']].drop_duplicates(), range_hotspot_cells, how='left', on=['cellid', 'cent_lat', 'cent_long'])
 plot_cell_feature(uniq_range_cell, 'cellid', 'cent_lat', 'cent_long', 'total_richness', title='Range Richness Hotspots', second_feature_data=all_range_hotspot_cells, second_feature_column='hotspot')
