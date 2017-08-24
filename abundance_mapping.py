@@ -142,13 +142,9 @@ data.rename(columns = {'site_id':'site'}, inplace = True)
 data.rename(columns = {'species_id':'species'}, inplace = True)
 data = pd.merge(data, AOU_list, how='inner', on=['species']) #exclude species whose ranges are not mostly in north america
 
+data = data[(data['year'] <= 2015) & (data['year'] >= 2005)]
 
-year_subset = data[(data['year'] <= 2015) & (data['year'] >= 2005)]
-#year_subset = data[(data['year'] <= 2010) & (data['year'] >= 2005)]
-#year_subset = data[(data['year'] <= 2015) & (data['year'] >= 2010)]
-#year_subset = data[(data['year'] <= 1995) & (data['year'] >= 1985)]
-
-richness_by_site = macroecotools.richness_in_group(year_subset, 
+richness_by_site = macroecotools.richness_in_group(data, 
                                                    ['site', 'lat', 'long'], ['species'])
 
 #plot according to richness at site
@@ -184,7 +180,7 @@ selected_rare = selected_w_proportion[selected_w_proportion['proportion'] < sele
 selected_rare = selected_rare.drop('proportion', 1)
 rarity_richness_by_site = macroecotools.richness_in_group(selected_rare, ['site', 'lat', 'long'], ['species'])
 site_hotspot = get_hotspots(rarity_richness_by_site, 'richness')
-plot_sites_by_characteristic(rarity_richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=10, title='survey rarity', dataframe2=site_hotspot, lat_col2='lat', long_col2='long')
+plot_sites_by_characteristic(rarity_richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=5, title='survey rarity', dataframe2=site_hotspot, lat_col2='lat', long_col2='long')
 
 #RANGE DATA
 range_map = pd.read_csv('mapping_data/rangemap_species_2016.csv', usecols=['site', 'sisid'])
@@ -206,7 +202,7 @@ plot_sites_by_characteristic(range_abun, lat_col='lat', long_col='long', char_co
 range_rare = range_rare.drop('proportion', 1)
 range_rarity_richness = macroecotools.richness_in_group(range_rare, ['site', 'lat', 'long'], ['sisid'])
 range_rare_hotspot = get_hotspots(range_rarity_richness, 'richness')
-plot_sites_by_characteristic(range_rarity_richness, lat_col='lat', long_col='long', char_column='richness', bins=10, title='range rarity', dataframe2=range_rare_hotspot, lat_col2='lat', long_col2='long')
+plot_sites_by_characteristic(range_rarity_richness, lat_col='lat', long_col='long', char_column='richness', bins=5, title='range rarity', dataframe2=range_rare_hotspot, lat_col2='lat', long_col2='long')
 
 
 ##Range map rarity definition
