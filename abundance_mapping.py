@@ -354,3 +354,4 @@ ax.set_ylabel('Hotspot Similarity Percentage')
 tick_labels = ['site level richness', 'cell level richness', 'site level rarity', 'cell level rarity']
 ax.set_xticks(ind+width)
 ax.set_xticklabels(tick_labels)
+plt.show()
