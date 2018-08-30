@@ -124,25 +124,42 @@ def get_hotspots(data, richness_column, cell=False):
     return hotspots
 
 
-included_species = pd.read_csv('mapping_data/included_species_ids.csv')
+#species for whome the majority of their range is in North America
+included_species = pd.read_csv('data/mapping_data/included_species_ids.csv')
+
 #clean up excluded families
-included_species = included_species[(included_species['AOU'] > 2880)]
-included_species = included_species[(included_species['AOU'] < 3650) | (included_species['AOU'] > 3810)]
-included_species = included_species[(included_species['AOU'] < 3900) | (included_species['AOU'] > 3910)]
-included_species = included_species[(included_species['AOU'] < 4160) | (included_species['AOU'] > 4210)]
-included_species = included_species[(included_species['AOU'] != 7010)]
-included_species.rename(columns= {'AOU':'species'}, inplace = True)
-AOU_list = pd.DataFrame(included_species['species'])
-sisid_list = pd.DataFrame(included_species['sisid'])
+def bbs_exclude_families(species_list, aou_column, return_cols = None):
+    # pass a dataframe with species ID (AOU) column and return that dataframe (or a subset of it)
+    # with observations of bad BBS species excluded
+
+    included_species = species_list[(species_list[aou_column] > 2880)]
+    included_species = included_species[(included_species[aou_column] < 3650) | (included_species[aou_column] > 3810)]
+    included_species = included_species[(included_species[aou_column] < 3900) | (included_species[aou_column] > 3910)]
+    included_species = included_species[(included_species[aou_column] < 4160) | (included_species[aou_column] > 4210)]
+    included_species = included_species[(included_species[aou_column] != 7010)]
+    if aou_column == "AOU":
+        included_species.rename(columns= {aou_column:'species'}, inplace = True)
+    if return_cols:
+        print("some columns")
+        return included_species[return_cols]
+    else:
+        print("all columns")
+        return included_species
+
+analysis_species = bbs_exclude_families(included_species, "AOU", ['species', 'sisid'])
 
 #SURVEY DATA
 #formatting
 data = pd.read_csv('data/mapping_data/bbs_species_2016.csv', delimiter=',', sep='\s*,\s*')
 data.rename(columns = {'site_id':'site'}, inplace = True)
 data.rename(columns = {'species_id':'species'}, inplace = True)
-data = pd.merge(data, AOU_list, how='inner', on=['species']) #exclude species whose ranges are not mostly in north america
-
 data = data[(data['year'] <= 2015) & (data['year'] >= 2005)]
+
+#plot richness map with non-North America majority species included
+data_clean = bbs_exclude_families(data, 'species')
+
+data = pd.merge(data, analysis_species[['species']], how='inner', on=['species']) #exclude species whose ranges are not mostly in north america
+
 
 richness_by_site = macroecotools.richness_in_group(data, 
                                                    ['site', 'lat', 'long'], ['species'])
@@ -166,7 +183,7 @@ data_rare = data_w_proportion[data_w_proportion['proportion'] < median_rarity]
 #plot_sites_by_characteristic(data_rare, lat_col='lat', long_col='long')
 
 if os.path.isfile('selected_sites.csv') == True:
-    selected_sites = pd.read_csv('selected_sites.csv', delimiter=',')
+    selected_sites = pd.read_csv('data/mapping_data/selected_sites.csv', delimiter=',')
     print ('yes')
 else:
     selected_sites = get_sites_by_grid(data, 'site', 'lat', 'long', 100, 3)
@@ -186,10 +203,10 @@ plot_sites_by_characteristic(rarity_richness_by_site, lat_col='lat', long_col='l
 plt.savefig('figures/survey_site_rare.png')
 
 #RANGE DATA
-range_map = pd.read_csv('data/mapping_data/rangemap_species_2016.csv', usecols=['site', 'sisid'])
+range_map = pd.read_csv('data/mapping_data/rangemap_species_2016-order.csv', usecols=['site', 'sisid'])
 range_map = pd.merge(range_map, richness_by_site[['site', 'lat', 'long']], on = 'site', how = 'left')
 range_map = range_map.sort_values('site')
-range_map = pd.merge(range_map, sisid_list, how='inner', on=['sisid'])
+range_map = pd.merge(range_map, analysis_species[["sisid"]], how='inner', on=['sisid'])
 range_abun = macroecotools.richness_in_group(range_map, ['site', 'lat', 'long'], ['sisid'])
 
 range_selected = pd.merge(selected_sites, range_map, how='left', on=['site', 'lat', 'long'])
