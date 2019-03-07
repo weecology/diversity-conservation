@@ -1,7 +1,9 @@
 from __future__ import division
 from __future__ import print_function
-import numpy as np
+import matplotlib
+matplotlib.use('pdf')
 import matplotlib.pyplot as plt
+import numpy as np
 import colorsys
 from numpy import log10
 import pandas as pd
@@ -20,8 +22,8 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, title=None, char_
     map = Basemap(projection='merc',llcrnrlat=23.5,urcrnrlat=57, llcrnrlon=-140,urcrnrlon=-50,lat_ts=20,resolution='l')
     map.drawcoastlines(linewidth = 1.25)
     plt.title(title)
-    
-    if not char_column:    
+
+    if not char_column:
         lats = dataframe[lat_col]
         longs = dataframe[long_col]
         x,y = map(longs.values,lats.values)
@@ -31,7 +33,7 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, title=None, char_
         blues = sns.color_palette("Blues", n_colors=bins)
         dataframe['quantile'] = pd.qcut(dataframe[char_column], bins)
         grouped = dataframe.groupby('quantile')
-        
+
         i= -1
         for groupname, groupdata, in grouped:
             i = i + 1
@@ -41,11 +43,12 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, title=None, char_
             x,y = map(longs.values,lats.values)
             map.plot(x, y, ls='', marker='o', color=colors, markersize=2)
     plt.hold(True)
-    if lat_col2:    
+    if lat_col2:
         lats = dataframe2[lat_col2]
         longs = dataframe2[long_col2]
         x,y = map(longs.values,lats.values)
-        map.plot(x, y, ls='', marker='o', markersize=2, color='brown')    
+        map.plot(x, y, ls='', marker='o', markersize=2, color='brown')
+    plt.show()
 
 #plot rare species
 def get_rarity_proportion(dataframe, species_column, site_column):
@@ -71,7 +74,7 @@ def get_median_rarity_proportion(dataframe, species_column, proportion_column):
     return med
 
 #find centroid of cell
-def get_centroid(points):  
+def get_centroid(points):
     x = [p[0] for p in points]
     y = [p[1] for p in points]
     cent_lat = sum(x) / len(points)
@@ -106,7 +109,7 @@ def get_sites_by_grid(dataframe, site_col, lat_col, long_col, band_width, sites_
             long_start = long_end
             if len(data_sub[site_col]) >= sites_in_cell:
                 selection = data_sub.ix[random.sample(data_sub.index, sites_in_cell)]
-                selection['cellid'] = cellid                
+                selection['cellid'] = cellid
                 data_selection = data_selection.append(selection)
         lat_start = lat_end
     centroid_coordinates.columns = ['cent_lat', 'cent_long', 'cellid']
@@ -120,33 +123,34 @@ def get_hotspots(data, richness_column, cell=False):
     else:
         num_hotspots = int(round(0.05 * (len(sort)-sort[richness_column].isnull().sum())))
         hotspots = sort.head(num_hotspots)
-        hotspots['hotspot'] = [1]*num_hotspots   
+        hotspots['hotspot'] = [1]*num_hotspots
     return hotspots
+
 
 
 #species for whome the majority of their range is in North America
 included_species = pd.read_csv('data/mapping_data/included_species_ids.csv')
 
-#clean up excluded families
-def bbs_exclude_families(species_list, aou_column, return_cols = None):
-    # pass a dataframe with species ID (AOU) column and return that dataframe (or a subset of it)
-    # with observations of bad BBS species excluded
-
-    included_species = species_list[(species_list[aou_column] > 2880)]
-    included_species = included_species[(included_species[aou_column] < 3650) | (included_species[aou_column] > 3810)]
-    included_species = included_species[(included_species[aou_column] < 3900) | (included_species[aou_column] > 3910)]
-    included_species = included_species[(included_species[aou_column] < 4160) | (included_species[aou_column] > 4210)]
-    included_species = included_species[(included_species[aou_column] != 7010)]
-    if aou_column == "AOU":
-        included_species.rename(columns= {aou_column:'species'}, inplace = True)
-    if return_cols:
-        print("some columns")
-        return included_species[return_cols]
-    else:
-        print("all columns")
-        return included_species
-
-analysis_species = bbs_exclude_families(included_species, "AOU", ['species', 'sisid'])
+# #clean up excluded families
+# def bbs_exclude_families(species_list, aou_column, return_cols = None):
+#     # pass a dataframe with species ID (AOU) column and return that dataframe (or a subset of it)
+#     # with observations of bad BBS species excluded
+#
+#     included_species = species_list[(species_list[aou_column] > 2880)]
+#     included_species = included_species[(included_species[aou_column] < 3650) | (included_species[aou_column] > 3810)]
+#     included_species = included_species[(included_species[aou_column] < 3900) | (included_species[aou_column] > 3910)]
+#     included_species = included_species[(included_species[aou_column] < 4160) | (included_species[aou_column] > 4210)]
+#     included_species = included_species[(included_species[aou_column] != 7010)]
+#     if aou_column == "AOU":
+#         included_species.rename(columns= {aou_column:'species'}, inplace = True)
+#     if return_cols:
+#         print("some columns")
+#         return included_species[return_cols]
+#     else:
+#         print("all columns")
+#         return included_species
+#
+# analysis_species = bbs_exclude_families(included_species, "AOU", ['species', 'sisid'])
 
 #SURVEY DATA
 #formatting
@@ -155,19 +159,25 @@ data.rename(columns = {'site_id':'site'}, inplace = True)
 data.rename(columns = {'species_id':'species'}, inplace = True)
 data = data[(data['year'] <= 2015) & (data['year'] >= 2005)]
 
+def plot_hotspots(data, title, bins = 10, species_col = 'species'):
+  richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], [species_col])
+  hotspot_sites = get_hotspots(richness_by_site, 'richness')
+  plot_sites_by_characteristic(richness_by_site, lat_col='lat', long_col='long', 
+                                title=title, char_column='richness', bins=bins, dataframe2=hotspot_sites, lat_col2='lat', long_col2='long')
+
 #plot richness map with non-North America majority species included
-data_clean = bbs_exclude_families(data, 'species')
+plot_hotspots(data, 'survey richness all species')
+plt.savefig('figures/survey_site_non_exclude.png')
 
-data = pd.merge(data, analysis_species[['species']], how='inner', on=['species']) #exclude species whose ranges are not mostly in north america
-
-
-richness_by_site = macroecotools.richness_in_group(data, 
-                                                   ['site', 'lat', 'long'], ['species'])
-
-#plot according to richness at site
-hotspot_sites = get_hotspots(richness_by_site, 'richness')
-plot_sites_by_characteristic(richness_by_site, lat_col='lat', long_col='long', title='survey richness', char_column='richness', bins=10, dataframe2=hotspot_sites, lat_col2='lat', long_col2='long')
+#exclude non-North America majority
+data = pd.merge(data, included_species[['AOU']], how='inner', left_on=['species'], right_on=['AOU']) #exclude species whose ranges are not mostly in north america
+plot_hotspots(data, 'survey richness species excluded')
 plt.savefig('figures/survey_site.png')
+
+
+
+
+
 
 ##estimates
 #data_est = pd.read_csv('site_biodiversity_estimates.csv', delimiter=',')
@@ -194,36 +204,32 @@ data_from_selected_sites = pd.merge(selected_sites, data, how='left', on=['site'
 selected_w_proportion = get_rarity_proportion(data_from_selected_sites, 'species', 'site')
 selected_median = get_median_rarity_proportion(selected_w_proportion, 'species', 'proportion')
 selected_rare = selected_w_proportion[selected_w_proportion['proportion'] < selected_median]
+selected_rare = selected_rare.drop('proportion', 1)
 
 #plot sites according to richness of rare species
-selected_rare = selected_rare.drop('proportion', 1)
-rarity_richness_by_site = macroecotools.richness_in_group(selected_rare, ['site', 'lat', 'long'], ['species'])
-site_hotspot = get_hotspots(rarity_richness_by_site, 'richness')
-plot_sites_by_characteristic(rarity_richness_by_site, lat_col='lat', long_col='long', char_column='richness', bins=5, title='survey rarity', dataframe2=site_hotspot, lat_col2='lat', long_col2='long')
-plt.savefig('figures/survey_site_rare.png')
+plot_hotspots(selected_rare, bins = 5, title = "survey rarity")
+plt.savefig('figures/survey_site_rare_new.png')
 
 #RANGE DATA
+#richness
 range_map = pd.read_csv('data/mapping_data/rangemap_species_2016-order.csv', usecols=['site', 'sisid'])
-range_map = pd.merge(range_map, richness_by_site[['site', 'lat', 'long']], on = 'site', how = 'left')
+range_map = pd.merge(range_map, data[['site', 'lat', 'long']].drop_duplicates(), on = 'site', how = 'left')
 range_map = range_map.sort_values('site')
-range_map = pd.merge(range_map, analysis_species[["sisid"]], how='inner', on=['sisid'])
-range_abun = macroecotools.richness_in_group(range_map, ['site', 'lat', 'long'], ['sisid'])
+range_map = pd.merge(range_map, included_species[["sisid"]], how='inner', on=['sisid'])
+#range_abun = macroecotools.richness_in_group(range_map, ['site', 'lat', 'long'], ['sisid'])
 
+plot_hotspots(range_map, title = "range map richness", species_col = 'sisid')
+plt.savefig('figures/range_site.png')
+
+#rarity
 range_selected = pd.merge(selected_sites, range_map, how='left', on=['site', 'lat', 'long'])
 range_prop = get_rarity_proportion(range_selected, 'sisid', 'site')
 range_median = get_median_rarity_proportion(range_prop, 'sisid', 'proportion')
 range_rare = range_prop[range_prop['proportion'] < range_median]
-
-#plot range map abundance at site points
-range_rich_hotspot = get_hotspots(range_abun, 'richness')
-plot_sites_by_characteristic(range_abun, lat_col='lat', long_col='long', char_column='richness', bins=10, title="range map richness", dataframe2=range_rich_hotspot, lat_col2='lat', long_col2='long')
-plt.savefig('figures/range_site.png')
+range_rare = range_rare.drop('proportion', 1)
 
 #plot sites according to richness of rare species
-range_rare = range_rare.drop('proportion', 1)
-range_rarity_richness = macroecotools.richness_in_group(range_rare, ['site', 'lat', 'long'], ['sisid'])
-range_rare_hotspot = get_hotspots(range_rarity_richness, 'richness')
-plot_sites_by_characteristic(range_rarity_richness, lat_col='lat', long_col='long', char_column='richness', bins=5, title='range rarity', dataframe2=range_rare_hotspot, lat_col2='lat', long_col2='long')
+plot_hotspots(range_rare, title = 'range rarity', bins = 5, species_col = 'sisid')
 plt.savefig('figures/range_site_rare.png')
 
 ##Range map rarity definition
