@@ -159,11 +159,15 @@ data_non_exclude.rename(columns = {'site_id':'site'}, inplace = True)
 data_non_exclude.rename(columns = {'species_id':'species'}, inplace = True)
 data_non_exclude = data_non_exclude[(data_non_exclude['year'] <= 2015) & (data_non_exclude['year'] >= 2005)]
 
-def plot_hotspots(data, title, bins = 10, species_col = 'species'):
+def plot_hotspots(data, title, bins = 10, species_col = 'species', type = "plot"):
   richness_by_site = macroecotools.richness_in_group(data, ['site', 'lat', 'long'], [species_col])
   hotspot_sites = get_hotspots(richness_by_site, 'richness')
-  plot_sites_by_characteristic(richness_by_site, lat_col='lat', long_col='long',
+
+  if type == "plot":
+    plot_sites_by_characteristic(richness_by_site, lat_col='lat', long_col='long',
                                 title=title, char_column='richness', bins=bins, dataframe2=hotspot_sites, lat_col2='lat', long_col2='long')
+  if type == "hotspots":
+      return(hotspot_sites)
 
 #plot richness map with non-North America majority species included
 plot_hotspots(data_non_exclude, 'survey richness all species')
@@ -375,8 +379,15 @@ plot_sites_by_characteristic(rwr_sites_range, 'lat', 'long', title='RWR Sites Ra
 
 
 #bar plot of data type comparisons
+
+#get hotspots for site data
+hotspot_sites = plot_hotspots(data, 'richness', type = "hotspots")
+rare_hotspots_sites = plot_hotspots(selected_rare, 'richness', type = "hotspots")
+range_rich_hotspot = plot_hotspots(range_map, 'richness', species_col = 'sisid', type = "hotspots")
+range_rare_hotspot = plot_hotspots(range_rare, 'richness', species_col = 'sisid', type = "hotspots")
+
 site_rich_comp = (len(pd.merge(hotspot_sites, range_rich_hotspot, how='inner', on=['site', 'lat', 'long']))*2)/(len(hotspot_sites)+len(range_rich_hotspot))
-site_rare_comp = (len(pd.merge(site_hotspot, range_rare_hotspot, how='inner', on=['site', 'lat', 'long']))*2)/(len(range_rare_hotspot)+len(site_hotspot))
+site_rare_comp = (len(pd.merge(rare_hotspots_sites, range_rare_hotspot, how='inner', on=['site', 'lat', 'long']))*2)/(len(range_rare_hotspot)+len(rare_hotspots_sites))
 cell_rich_comp = (len(pd.merge(obs_hotspot_cell, range_hotspot_cells, how='inner', on=['cellid', 'cent_lat', 'cent_long']))*2)/(len(obs_hotspot_cell)+len(range_hotspot_cells))
 cell_rare_comp = (len(pd.merge(rare_survey_hotspot_cells, rare_range_hotspot_cells, how='inner', on=['cellid', 'cent_lat', 'cent_long']))*2)/(len(rare_survey_hotspot_cells)+len(rare_range_hotspot_cells))
 rwr_comp = (len(pd.merge(rwr_sites_survey, rwr_sites_range, how='inner', on=['site', 'lat', 'long']))*2)/(len(rwr_sites_survey)+len(rwr_sites_range))
@@ -393,7 +404,11 @@ rects1 = ax.bar(ind, perc, width, color='brown')
 ax.bar(ind, perc, width, color='maroon')
 ax.set_ylim([0,1])
 ax.set_ylabel('Hotspot Similarity Percentage')
-tick_labels = ['site level richness', 'cell level richness', 'site level rarity', 'cell level rarity']
+tick_labels = ['site richness', 'cell richness', 'site rarity', 'cell rarity']
 ax.set_xticks(ind+width)
 ax.set_xticklabels(tick_labels)
+
+
+plt.bar(ind, perc, color='maroon')
+plt.xticks(ind, tick_labels)
 plt.savefig('figures/comparison_barplot.png')
