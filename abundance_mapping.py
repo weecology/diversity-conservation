@@ -131,26 +131,6 @@ def get_hotspots(data, richness_column, cell=False):
 #species for whome the majority of their range is in North America
 included_species = pd.read_csv('data/mapping_data/included_species_ids.csv')
 
-# #clean up excluded families
-# def bbs_exclude_families(species_list, aou_column, return_cols = None):
-#     # pass a dataframe with species ID (AOU) column and return that dataframe (or a subset of it)
-#     # with observations of bad BBS species excluded
-#
-#     included_species = species_list[(species_list[aou_column] > 2880)]
-#     included_species = included_species[(included_species[aou_column] < 3650) | (included_species[aou_column] > 3810)]
-#     included_species = included_species[(included_species[aou_column] < 3900) | (included_species[aou_column] > 3910)]
-#     included_species = included_species[(included_species[aou_column] < 4160) | (included_species[aou_column] > 4210)]
-#     included_species = included_species[(included_species[aou_column] != 7010)]
-#     if aou_column == "AOU":
-#         included_species.rename(columns= {aou_column:'species'}, inplace = True)
-#     if return_cols:
-#         print("some columns")
-#         return included_species[return_cols]
-#     else:
-#         print("all columns")
-#         return included_species
-#
-# analysis_species = bbs_exclude_families(included_species, "AOU", ['species', 'sisid'])
 
 #SURVEY DATA
 #formatting
@@ -216,7 +196,7 @@ plt.savefig('figures/survey_site_rare_new.png')
 
 #RANGE DATA
 #richness
-range_map_inc = pd.read_csv('data/mapping_data/rangemap_species_2016-order.csv', usecols=['site', 'sisid'])
+range_map_inc = pd.read_csv('data/mapping_data/rangemap_species_2016-family.csv', usecols=['site', 'sisid'])
 range_map_inc = pd.merge(range_map_inc, data[['site', 'lat', 'long']].drop_duplicates(), on = 'site', how = 'left')
 range_map_inc = range_map_inc.sort_values('site')
 range_map = pd.merge(range_map_inc, included_species[["sisid"]], how='inner', on=['sisid'])
