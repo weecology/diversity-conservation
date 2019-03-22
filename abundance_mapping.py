@@ -15,6 +15,7 @@ import seaborn as sns
 import random
 import glob
 import os
+import pdb
 
 #plot sites
 def plot_sites_by_characteristic(dataframe, lat_col, long_col, title=None, char_column=None, bins=None, dataframe2=None, lat_col2=None, long_col2=None):
@@ -31,7 +32,7 @@ def plot_sites_by_characteristic(dataframe, lat_col, long_col, title=None, char_
 
     if char_column:
         blues = sns.color_palette("Blues", n_colors=bins)
-        dataframe['quantile'] = pd.qcut(dataframe[char_column], bins)
+        dataframe['quantile'] = pd.qcut(dataframe[char_column], bins, duplicates='drop')
         grouped = dataframe.groupby('quantile')
 
         i= -1
@@ -196,7 +197,7 @@ plt.savefig('figures/survey_site_rare_new.png')
 
 #RANGE DATA
 #richness
-range_map_inc = pd.read_csv('data/mapping_data/rangemap_species_2016-family.csv', usecols=['site', 'sisid'])
+range_map_inc = pd.read_csv('data/mapping_data/rangemap_species_2016-order.csv', usecols=['site', 'sisid'])
 range_map_inc = pd.merge(range_map_inc, data[['site', 'lat', 'long']].drop_duplicates(), on = 'site', how = 'left')
 range_map_inc = range_map_inc.sort_values('site')
 range_map = pd.merge(range_map_inc, included_species[["sisid"]], how='inner', on=['sisid'])
@@ -213,7 +214,7 @@ range_rare = range_prop[range_prop['proportion'] < range_median]
 range_rare = range_rare.drop('proportion', 1)
 
 #plot sites according to richness of rare species
-plot_hotspots(range_rare, title = 'range rarity', bins = 5, species_col = 'sisid')
+plot_hotspots(range_rare, title = 'range rarity', species_col = 'sisid')
 plt.savefig('figures/range_site_rare.png')
 
 ##Range map rarity definition
@@ -366,11 +367,17 @@ rare_hotspots_sites = plot_hotspots(selected_rare, 'richness', type = "hotspots"
 range_rich_hotspot = plot_hotspots(range_map, 'richness', species_col = 'sisid', type = "hotspots")
 range_rare_hotspot = plot_hotspots(range_rare, 'richness', species_col = 'sisid', type = "hotspots")
 
+#hotspots for non-exclude figures
+survey_inc_hotspot = plot_hotspots(data_non_exclude, 'richness', type = "hotspots")
+range_inc_hotspot = plot_hotspots(range_map_inc, 'richness', species_col = 'sisid', type = "hotspots")
+
 site_rich_comp = (len(pd.merge(hotspot_sites, range_rich_hotspot, how='inner', on=['site', 'lat', 'long']))*2)/(len(hotspot_sites)+len(range_rich_hotspot))
 site_rare_comp = (len(pd.merge(rare_hotspots_sites, range_rare_hotspot, how='inner', on=['site', 'lat', 'long']))*2)/(len(range_rare_hotspot)+len(rare_hotspots_sites))
 cell_rich_comp = (len(pd.merge(obs_hotspot_cell, range_hotspot_cells, how='inner', on=['cellid', 'cent_lat', 'cent_long']))*2)/(len(obs_hotspot_cell)+len(range_hotspot_cells))
 cell_rare_comp = (len(pd.merge(rare_survey_hotspot_cells, rare_range_hotspot_cells, how='inner', on=['cellid', 'cent_lat', 'cent_long']))*2)/(len(rare_survey_hotspot_cells)+len(rare_range_hotspot_cells))
 rwr_comp = (len(pd.merge(rwr_sites_survey, rwr_sites_range, how='inner', on=['site', 'lat', 'long']))*2)/(len(rwr_sites_survey)+len(rwr_sites_range))
+survey_ex_comp = (len(pd.merge(hotspot_sites, survey_inc_hotspot, how='inner', on=['site', 'lat', 'long']))*2)/(len(hotspot_sites)+len(survey_inc_hotspot))
+range_ex_comp = (len(pd.merge(range_rich_hotspot, range_inc_hotspot, how='inner', on=['site', 'lat', 'long']))*2)/(len(range_rich_hotspot)+len(range_inc_hotspot))
 
 perc = [site_rich_comp, cell_rich_comp, site_rare_comp, cell_rare_comp]
 N = len(perc)
@@ -392,3 +399,23 @@ ax.set_xticklabels(tick_labels)
 plt.bar(ind, perc, color='maroon')
 plt.xticks(ind, tick_labels)
 plt.savefig('figures/comparison_barplot.png')
+
+def bbs_exclude_families(species_list, aou_column, return_cols = None):
+    # pass a dataframe with species ID (AOU) column and return that dataframe (or a subset of it)
+    # with observations of bad BBS species excluded
+
+    included_species = species_list[(species_list[aou_column] > 2880)]
+    included_species = included_species[(included_species[aou_column] < 3650) | (included_species[aou_column] > 3810)]
+    included_species = included_species[(included_species[aou_column] < 3900) | (included_species[aou_column] > 3910)]
+    included_species = included_species[(included_species[aou_column] < 4160) | (included_species[aou_column] > 4210)]
+    included_species = included_species[(included_species[aou_column] != 7010)]
+    if aou_column == "AOU":
+        included_species.rename(columns= {aou_column:'species'}, inplace = True)
+    if return_cols:
+        print("some columns")
+        return included_species[return_cols]
+    else:
+        print("all columns")
+        return included_species
+
+analysis_species = bbs_exclude_families(included_species, "AOU", ['species', 'sisid'])

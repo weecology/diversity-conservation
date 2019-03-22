@@ -1,6 +1,8 @@
 from __future__ import division
 from __future__ import print_function
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import colorsys
 from numpy import log10
@@ -14,7 +16,7 @@ import random
 import glob
 import os
 
-included_species = pd.read_csv('mapping_data/included_species_ids.csv')
+included_species = pd.read_csv('data/mapping_data/included_species_ids.csv')
 #clean up excluded families
 included_species = included_species[(included_species['AOU'] > 2880)]
 included_species = included_species[(included_species['AOU'] < 3650) | (included_species['AOU'] > 3810)]
@@ -25,7 +27,7 @@ included_species.rename(columns= {'AOU':'species'}, inplace = True)
 AOU_list = pd.DataFrame(included_species['species'])
 sisid_list = pd.DataFrame(included_species['sisid'])
 
-data = pd.read_csv('mapping_data/bbs_species_2016.csv', delimiter=',', sep='\s*,\s*')
+data = pd.read_csv('data/mapping_data/bbs_species_2016.csv', delimiter=',', sep='\s*,\s*')
 data.rename(columns = {'site_id':'site'}, inplace = True)
 data.rename(columns = {'species_id':'species'}, inplace = True)
 data = pd.merge(data, AOU_list, how='inner', on=['species']) #exclude species whose ranges are not mostly in north america
@@ -47,7 +49,10 @@ for site, site_data in fiveyear_subset.groupby('site'):
 fiveyear = pd.DataFrame(fiveyear_count, columns = ['site', 'counts'])
 
 plt.hist(tenyear['counts'])
+plt.savefig('figures/sensitivity/tenyear_counts.png')
+
 plt.hist(fiveyear['counts'])
+plt.savefig('figures/sensitivity/fiveyear_counts.png')
 
 def filter_survey_data (data, start_year, end_year, min_years_surveyed, year_column, site_column):
     data = data[(data[year_column] <= end_year) & (data[year_column] >= start_year)]
